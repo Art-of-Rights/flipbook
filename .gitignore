@@ -1,0 +1,27 @@
+# Never commit: add-ons (downloaded or built on your PC, some from your own copyrighted books),
+# your reading data, build output and the Python environment.
+addons/
+flipbook-data/
+_build/
+build/
+dist/
+__pycache__/
+*.pyc
+.venv/
+*.exe
+*.sqlite
+*.sqlite-journal
+*.log
+*.wav
+
+# Books: keep PDFs out of the repository (yours may be copyrighted), and the list of your own
+# test books for dev/test_mydict.py --real.
+*.pdf
+real_books.json
+
+# Editor and system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

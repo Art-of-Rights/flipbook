@@ -1,0 +1,21 @@
+# Packages needed to run Flipbook from source and to build Flipbook.exe (Python 3.13, Windows x64).
+# Since v1.8.7 the build uses Python 3.13 (python.org, per-user install) in a virtual environment in the
+# project root, ..\..\.venv (the .venv folder next to the Flipbook folder). Create it with:
+#   & "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe" -m venv .venv
+#   .venv\Scripts\python.exe -m pip install --only-binary ":all:" --no-binary proxy_tools -r Flipbook\dev\requirements-dev.txt
+# (proxy_tools, a small pywebview dependency, is published only as source.)
+pywebview==6.2.1          # native window (Edge WebView2); pulls in pythonnet 3.2.1, clr_loader 0.3.1, proxy_tools, bottle
+pythonnet==3.2.1          # .NET bridge for pywebview's WinForms window (first line with Python 3.13 support)
+pyinstaller==6.22.3       # builds the single-file exe
+onnxruntime-directml==1.23.0  # runs Kokoro on the CPU and (DirectML) on the graphics card; bundled.
+                          # It REPLACES the plain `onnxruntime` package (same module name): never install both.
+onnx==1.19.1              # converts the GPU voice model once on the user's PC (kokoro_gpu.convert); bundled.
+                          # Keep this exact version: the conversion output is compared against it in dev/test_gpu.py.
+numpy==2.2.6              # used by tts.py (bundled)
+espeakng-loader==0.2.4    # espeak-ng.dll 1.52.0 + data for pronunciation (only the DLL + English data are bundled)
+pillow==12.3.0            # only for make_icon.py (excluded from the exe)
+pypdf==7.0.1              # bundled since 1.8.17: legal.py and mydict.py read the user's own dictionary PDFs
+                          # (BSD-3-Clause)
+# dictionary.py, serve.py and qwen.py use the standard library only (qwen.py also numpy).
+# The Qwen3-TTS add-on's own Python 3.12 + PyTorch are NOT installed here: qwen.py downloads them into
+# addons\qwen on the user's PC from the hash-pinned list inside qwen.py.

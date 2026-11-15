@@ -1,0 +1,1609 @@
+================================================================================
+  FLIPBOOK PDF READER
+  Version 1.8.20  -  Released 2026-11-15
+================================================================================
+
+Flipbook reads any PDF like a real book: two pages side by side, turned with a
+3D page-flip animation. It builds a table of contents for every book, lets you
+add your own bookmarks, remembers where you stopped reading, can read the book
+aloud to you (with an optional natural, human-sounding AI voice), and can look
+up the meaning and origin of any word you click.
+
+It runs entirely on your computer and works offline. Nothing is uploaded.
+
+New in 1.8.20:
+  - New, everyday examples in this manual and in the pronunciation fixes
+    window (for example "candidate", "travelled", "Worcestershire"), and
+    neutral sentences for the graphics-card voice test. Nothing else
+    changed.
+  - 1.8.18 added dictionaries of your own from PDF files: "🧩 Add-ons" >
+    "Your own dictionaries" (section 10).
+
+For every earlier version, see "ⓘ About" > "Version history".
+
+
+--------------------------------------------------------------------------------
+  CONTENTS
+--------------------------------------------------------------------------------
+  1. What's in this folder
+  2. System requirements
+  3. Getting started
+  4. Opening PDFs
+  5. Reading and turning pages
+  6. Table of contents
+  7. Bookmarks
+  8. Read aloud
+  9. The natural AI voice, the graphics card and Qwen3-TTS (optional add-ons)
+ 10. Word look-up and the Dictionary (optional add-on)
+ 11. Pronunciation fixes
+ 12. Light and dark themes
+ 13. Keyboard and mouse controls
+ 14. Where your data is stored
+ 15. Moving, copying or updating Flipbook
+ 16. Troubleshooting
+ 17. Technical details
+ 18. Third-party software and licenses
+
+
+--------------------------------------------------------------------------------
+  1. WHAT'S IN THIS FOLDER
+--------------------------------------------------------------------------------
+  Flipbook.exe     The application. It is the only file needed to run.
+                   Everything it uses (reader engine, text recognition,
+                   read-aloud engine, fonts, this manual) is built into
+                   this one file.
+  Flipbook - SHA-256 checksum.txt
+                   The checksum and exact size of Flipbook.exe, and how to
+                   check that your copy is the genuine, undamaged file.
+                   (Not needed to run Flipbook.)
+
+  Created automatically while you use it:
+  flipbook-data\   Your book list (books.json), bookmarks, each book's table
+                   of contents, and your pronunciation fixes.
+  addons\voice\        The natural AI voice - only if you download it
+                       (about 206 MB, section 9); addons\voice\gpu\ holds
+                       its graphics-card speed-up (about 326 MB) if added.
+  addons\qwen\         The Qwen3-TTS voices - only if you download them
+                       (about 7.4 GB, section 9).
+  addons\dictionary\   The Dictionary - only if you download it
+                       (about 46 MB once built, section 10).
+  addons\legal\        The Legal dictionary (Black's Law) - only if you
+                       add it (section 10).
+  addons\mydicts\      Dictionaries you added from your own PDFs - only
+                       if you add one (section 10).
+
+  Optional:
+  *.pdf            Any PDF placed in this folder appears in the Library.
+                   (Books anywhere else join the Library when you open or
+                   add them.)
+
+
+--------------------------------------------------------------------------------
+  2. SYSTEM REQUIREMENTS
+--------------------------------------------------------------------------------
+  - Windows 10 or Windows 11, 64-bit.
+  - Microsoft Edge WebView2 Runtime. It is already part of Windows 11 and of
+    up-to-date Windows 10. If it is missing, Flipbook tells you so on start.
+    Since 1.8.7 the PDF engine needs a recent version (it normally updates
+    itself). If it is too old, the Home screen says so and books won't
+    open until it is updated from the link below.
+    Download (free): https://developer.microsoft.com/microsoft-edge/webview2/
+  - No Python or other software is needed. An internet connection is only
+    needed once per add-on, if you choose to download one.
+  - Disk: about 66 MB for the app, plus your PDFs, plus 206 MB for the AI
+    voice (+326 MB for its graphics-card speed-up), 46 MB for the Dictionary
+    and about 7.4 GB for the Qwen3-TTS voices, if you add them.
+  - Graphics card (optional): any graphics card with at least 2 GB of its
+    own video memory can speed up the AI voice. The Qwen3-TTS voices need an
+    NVIDIA graphics card with about 6 GB of video memory or more.
+  - Memory: 4 GB or more is recommended for very large PDFs (thousands of
+    pages) and for the AI voice.
+  - Speakers or headphones for Read aloud.
+
+
+--------------------------------------------------------------------------------
+  3. GETTING STARTED
+--------------------------------------------------------------------------------
+  1. Put this folder wherever you like (for example Documents\Flipbook).
+     Choose a folder you can write to - not "Program Files".
+  2. Double-click Flipbook.exe.
+  3. The first time on a new PC, Windows SmartScreen may say "Windows
+     protected your PC" because the app is not code-signed. Click
+     "More info" and then "Run anyway". This happens only once.
+  4. The Home screen appears ("Welcome to Flipbook"). Click "📂 Open a
+     PDF..." to open a book from anywhere on your PC. From then on, each time
+     Flipbook starts, Home says "Welcome back" and shows the book you read
+     last, with a picture of the page where you stopped and a "Continue
+     reading at page N" button (section 4).
+     At the bottom of Home: "🧩 Add-ons" (the optional add-ons) and the
+     version number.
+  5. When a book is open, the tools are in the bar on the right side. The
+     first time, a short tip points this out. Click "⌨ Commands" at the
+     bottom of that bar (or press ?) to see every key and mouse action, and
+     "🧩 Add-ons" to add the natural AI voice or the Dictionary.
+  6. To read this manual inside Flipbook, click "ⓘ About" in the tools
+     bar, just under "⌨ Commands". Click a line of its Contents to jump to
+     that section. Its "Version history" tab lists what changed in each
+     version.
+
+  Optional - shortcuts:
+  - Desktop: right-click Flipbook.exe > Show more options > Send to >
+    Desktop (create shortcut).
+  - Start menu / taskbar: right-click Flipbook.exe > Pin to Start, or
+    Pin to taskbar.
+
+
+--------------------------------------------------------------------------------
+  4. OPENING PDFs
+--------------------------------------------------------------------------------
+  Any of these work:
+  - "📂 Open a PDF..." on the Home screen (Windows' Open dialog).
+  - Pick a book in the Library (see below).
+  - Drag a PDF from File Explorer onto the Flipbook window.
+  - Drag one or more PDFs (or a folder of PDFs) onto Flipbook.exe itself.
+  - Right-click a PDF > Open with > Flipbook. (If Flipbook is not listed,
+    choose "Choose another app" > "More apps" > "Look for another app on this
+    PC" and select Flipbook.exe.) This does not change your default PDF app.
+
+  Home - the start screen (new in 1.6)
+  Each time Flipbook starts, Home shows:
+  - "Continue reading": the book you read last, with a picture of the page
+    where you stopped, the page number (e.g. "Page 57 of 300"), how long ago,
+    and a progress bar. Click "Continue reading at page 57" (or the picture)
+    to open it right there.
+  - "📂 Open a PDF..." to open a different book, and "📚 Your library" to
+    see all your books.
+  - At the bottom: "🧩 Add-ons" (the optional AI voices and Dictionary) and
+    the version number.
+  (Starting Flipbook by opening a PDF - "Open with", or dragging a PDF onto
+  Flipbook.exe - opens that PDF directly instead.)
+
+  The Library - your books
+  Open it with "📚 Your library" on Home, or the "Library" button at the top
+  while reading.
+  - Top left: "← Back to book" returns to the book you are reading (or
+    "← Home" when no book is open).
+  - Down the left side: every book you have opened, newest first, plus any
+    you added and every PDF in Flipbook's own folder. Under each name: the
+    page you got to and when, or "To read". The open book is highlighted.
+  - In the middle: a large picture of the chosen book - the page where you
+    stopped, or its first page if you haven't started it - with its details
+    and one button: "Continue at page N", "Start reading", or "Back to this
+    book".
+  - Click a book on the left to see it in the middle. Double-click it (or
+    press Enter, or click the page picture, or the button) to open it.
+  - "＋ Add PDFs to your library..." (bottom left): choose one or more PDFs
+    (hold Ctrl to pick several). They join the list as "To read", ready to
+    open whenever you like.
+  - Remove: point at a book and click the ✕ that appears, then confirm. This
+    only takes the book off the list: the PDF file is NOT deleted, and its
+    bookmarks and contents are kept and come back if you open it again.
+  - Search: with more than six books, a "Search your books..." box appears.
+  - "File not found" means the PDF was moved, renamed or deleted since. Open
+    it from its new place (its bookmarks come along) and remove the old
+    entry.
+  - The list is kept in flipbook-data\books.json, next to Flipbook.exe.
+  - Books opened by dragging them into the window or with "Open a PDF..."
+    are listed with their full location, so they can be opened again later
+    from wherever they are on your PC.
+
+  Each book keeps its own page position, table of contents and bookmarks.
+
+
+--------------------------------------------------------------------------------
+  5. READING AND TURNING PAGES
+--------------------------------------------------------------------------------
+  - Turn a page: click the arrow at either side, press the arrow keys, scroll
+    the mouse wheel, or grab a page corner and drag it across like a real page.
+  - Jump: type a page number in the "Page" box in the tools bar and press
+    Enter (or click Go), press G, drag the slider at the bottom, or use the
+    first/last page buttons.
+  - Read up close: double-click a page to open it large. Scroll to read,
+    then click or press Esc to close.
+  - Full screen: "Full screen" in the tools bar, or press F. The whole
+    screen shows only the book: the top bar, Contents and Library, the page
+    slider at the bottom, the tools bar, the page-turn arrows and the Read
+    aloud bar are all hidden. If CC is on while Read aloud is open, its
+    caption box stays at the bottom (the book is fitted above it).
+      - A note in the middle says "Full screen - Press Esc to exit" for a
+        few seconds.
+      - Turn pages with the arrow keys, Page Up / Page Down, Space, a click
+        on a page's edge or a drag. R, B, [ and ] still work.
+      - Bookmarks: point at the top corner of a page and click the ribbon
+        spot. The colour palette opens right there: pick a colour to
+        bookmark the page in it, or on a bookmarked page change its colour
+        or remove it.
+      - Esc (or F) returns to the normal window.
+  - In a narrow window, or when the sidebars leave a tall, narrow space,
+    Flipbook shows one page at a time; widen the window for two.
+  - Flipbook remembers the last page you read in every book and opens there
+    next time.
+  - The top bar shows the book title in the centre, with the part/chapter
+    you are in underneath.
+
+  The tools bar (right side)
+    » / «         Icons only / show the names (remembered)
+    Page  Go      Go to a page (in icons-only view: #, which asks for the
+                  page number)
+    🔍 Look up words   Look-up mode on / off (D)       - section 10
+      Etymology | ⚖ Legal  Which dictionary Look-up uses: the general one
+                       or Black's Law Dictionary          - section 10
+    🔗 Page links      Follow links and contents lines on / off (L)
+                       - "Page links" below
+    🔊 Read aloud      Show / hide the Read aloud bar (R) - section 8
+    Bookmark           Bookmark this page in a colour you choose, or change
+                       its colour / remove it (B: bookmark at once in the
+                       last colour, or remove)          - section 7
+                       Its icon is a small ribbon in the page's colour.
+    ☀ / ☾             Light or dark theme (T)          - section 12
+    ⛶ Full screen      (F)
+    🧩 Add-ons         Add or remove the optional add-ons - sections 9, 10
+    ⌨ Commands         Every key and mouse action (?)  - section 13
+    ⓘ About            This manual, and the version history in its
+                       "Version history" tab
+  The names are shown when the window is wide (1280 pixels or more) and
+  icons only in smaller windows; click » or « to choose. In very narrow
+  windows the bar always shows icons only. Hover over an icon to see its
+  name and key.
+
+  Page links (new in 1.8.8)
+  Click a line of a book's printed contents page, or a link built into the
+  PDF, to go straight to its page.
+  - Clicking a page still turns it. Only a click right on a link goes
+    somewhere else, and dragging a page always turns it, even if you
+    start on a link.
+  - Point at a link: the pointer becomes a hand, the line gets a soft
+    underline, and a tooltip says where it goes ("Go to page 45 of the
+    book: Chapter IV ...").
+  - Contents pages: Flipbook recognises a contents page by its column of
+    page numbers on the right. The number is the book's printed page
+    number, which is often not the page number in the file (the front
+    matter, plates and maps add pages). Flipbook finds the right page by
+    reading the printed page numbers at the top or bottom of the pages.
+    A title that runs onto a second line is one link. A heading with no
+    page number of its own ("Chapter IV", "PART TWO") goes to the page of
+    the first entry under it.
+  - Scanned books: their contents pages are read with text recognition.
+    Flipbook does this only for the first pages of a book and the pages
+    under a "Contents" entry, a second or two after you turn to them.
+    Finding the page then takes a few seconds ("Finding page 45 of the
+    book..."). If the page can't be found, Flipbook says so and stays put.
+  - Web links built into a PDF are not opened (Flipbook never goes on the
+    internet). A click shows their address.
+  - Going back: "↩ Back to page 13" appears at the bottom, next to the
+    page number. Click it, or press Backspace or Alt+←, to go back to the
+    page where you followed the link. It goes back step by step after
+    several links, and disappears when you are back.
+  - In Look-up mode a click looks up the word, even on a link.
+  - "🔗 Page links" in the tools bar, or L, switches links off (every
+    click turns the page) and on again. The choice is remembered.
+
+
+--------------------------------------------------------------------------------
+  6. TABLE OF CONTENTS
+--------------------------------------------------------------------------------
+  Click "Contents" (or press C) to open the sidebar.
+
+  - If the PDF has its own outline, it is shown right away.
+  - Flipbook also finds chapters itself by reading the pages in the
+    background and spotting headings. The progress shows at the top of the
+    sidebar ("Finding chapters... page X of Y"). You can keep reading while
+    it works; "Stop" pauses it and "Resume" continues later.
+  - Scanned books with no text layer are read with built-in text recognition
+    (OCR). This is slower: roughly a few seconds per page.
+  - Results are saved, so each book is only scanned once. Large books may take
+    a while the first time; progress is kept if you close the app.
+  - Click any entry to go straight to that page. The entry for the part you
+    are reading is highlighted.
+  - Type in "Search contents..." to filter the list.
+  - Detected titles from old scans can contain OCR spelling mistakes; the
+    page numbers are still correct.
+
+
+--------------------------------------------------------------------------------
+  7. BOOKMARKS
+--------------------------------------------------------------------------------
+  - Add in a colour: click "Bookmark" in the tools bar. A small palette
+    opens: "Bookmark page N in:" with 8 colours. Click one, and the page is
+    bookmarked with a ribbon in that colour.
+  - Add quickly: press B, click "+ Bookmark page N" in the sidebar's
+    Bookmarks tab, or click the ribbon spot at the top right of a page.
+    These use the colour you chose last.
+  - How to tell if a page is bookmarked (new in 1.7):
+      Not bookmarked   Pointing at the page shows a faint ribbon outline.
+                       Pointing at that ribbon makes it half-strength with
+                       a "+" - click it to bookmark the page.
+      Bookmarked       The ribbon is solid and fully coloured. When you add
+                       it, the ribbon drops into place and a short note at
+                       the top says "Page N bookmarked".
+                       Pointing at a marked ribbon shows "✕" - click it to
+                       remove the bookmark ("Bookmark on page N removed").
+    The ribbon's tooltip also says "Page N is bookmarked" or
+    "Bookmark this page".
+  - Colours (new in 1.7.4): every bookmark keeps its own colour. The 8
+    colours are Slate blue (the first default), Red, Orange, Gold, Green,
+    Teal, Purple and Rose. All are mid-tone, readable on light and dark
+    pages. Use them to group bookmarks, for example red for important
+    passages and green for references.
+      - Change a bookmark's colour: on that page, click "Bookmark"
+        ("Bookmarked" when the page is marked) and pick another colour. Or
+        click the colour dot next to the bookmark in the sidebar list.
+      - The same palette has "✕ Remove bookmark".
+      - Click outside the palette or press Esc to close it.
+      - The colour you pick last is remembered (for every book) and used by
+        B, a ribbon click and "+ Bookmark page N".
+      - Bookmarks made before 1.7.4 keep the colour they were shown in.
+  - Groups: the sidebar's Bookmarks tab lists bookmarks grouped by colour.
+    Each colour has a heading with its count, for example "Red (3)", and the
+    bookmarks under it are in page order.
+  - Go to: open the sidebar (C), choose the Bookmarks tab, click a bookmark.
+  - Rename: click the pencil (✎) next to a bookmark, type, press Enter
+    (Esc cancels).
+  - Remove: click the ✕ next to it, click the marked ribbon, press B again
+    on a marked page, or use "✕ Remove bookmark" in the Bookmark palette.
+  - Bookmarks are saved automatically and kept between sessions.
+
+
+--------------------------------------------------------------------------------
+  8. READ ALOUD
+--------------------------------------------------------------------------------
+  Flipbook can read the book to you, sentence by sentence.
+
+  Starting
+  - Click "🔊 Read aloud" in the tools bar to show the Read aloud bar, then
+    press ▶.
+    Or simply press R (it opens the bar and starts reading).
+  - Reading starts at the pages you are looking at - or, if you are on the
+    page where you last stopped, at the exact sentence where you stopped.
+  - To start at a chapter, click it in Contents first, then press ▶.
+  - Read from here: while the Read aloud bar is open, click any sentence on
+    the page and reading starts from that sentence. (Clicking the page margin
+    still turns the page.)
+
+  While it reads
+  - The sentence being read is highlighted on the page. The highlight has a
+    small margin around the text, so the first and last letters (and tall
+    capitals) are always fully inside it, and a closing quote mark stays
+    with the sentence it ends.
+  - When it reaches the end of the pages you see, the book turns the page
+    itself (with the page-flip animation) and keeps reading. A sentence that
+    runs onto the next page turns the page partway through.
+  - Running heads at the top of pages, page numbers and stray marks are
+    skipped. Words split with a hyphen at a line end are joined again.
+  - Chapter numbers, titles and section headings are read on their own,
+    each ending like a sentence with a short pause, so "Chapter IV - The
+    Early Years" is read "Chapter 4. The Early Years." and is not
+    run into the first sentence after it. Flipbook spots a heading by its
+    larger type, the space around it, or a short title line without a full
+    stop. A small footnote number printed after a word or a title (as in
+    "Years²⁴") is not read out.
+  - Numbers are read as numbers: "4,000" is "four thousand", "1,500" is
+    "one thousand five hundred", "3.5" is "three point five", and a year
+    such as 1717 is "seventeen seventeen".
+  - Dollar amounts are read as money: "$1,250.75" is "one thousand two
+    hundred fifty dollars and seventy-five cents", "$1" is "one dollar",
+    "$0.50" is "fifty cents" and "$4.5 million" is "four point five
+    million dollars".
+
+  If you turn the page by accident (or look ahead)
+  - Reading PAUSES and keeps its place. The bar shows a button like
+    "↩ p. 42".
+  - Turn back to that page, or click "↩ p. 42", and reading continues with
+    the same sentence - it does not start over.
+  - Press ▶ instead if you want to read the new pages from where you are.
+  - Prefer the old behaviour (reading jumps to whatever page you turn to)?
+    Switch on "Follow my page turns" with the ⤳ button in the bar.
+
+  The Read aloud bar
+    ⏮  previous sentence (←)  ▶/⏸  play / pause (R or Space)
+    ⏭  next sentence (→)      ⏹   stop
+
+  Keys while the Read aloud bar is open: Space pauses and resumes (it
+  starts reading if nothing is playing yet), and the Left / Right arrow
+  keys go to the previous / next sentence while reading or paused. Page Up
+  / Page Down still turn pages. Close the bar (✕) and Space and the arrow
+  keys turn pages again as usual.
+    Voice menu                choose a voice (see below and section 9). When
+                              the list is open, the voice in use is
+                              highlighted in blue and bold. Order: natural
+                              AI voice, standard Windows voices, Qwen3-TTS
+                              voices. It lists only voices: add or remove
+                              voices in 🧩 Add-ons (tools bar).
+    −  slider  +              reading speed
+    ↩ p. N                    back to where reading paused (when you turned away)
+    ⤳                         follow my page turns (on / off)
+    Footnotes: skipped/read   read the footnotes at the bottom of pages or not
+    CC                       caption: show the exact text being read
+    Aa                        pronunciation fixes (section 11)
+    ✕                         close the bar (stops reading)
+
+  The caption (CC)
+  - The text being read appears in its own box, just above the Read aloud
+    bar. Before reading starts it says "The words being read appear here."
+  - The book is made a little smaller to fit above the box, so the box never
+    covers any words, footnotes or page numbers.
+  - The box keeps the same size the whole time: a long sentence is shown in
+    a slightly smaller font instead of a bigger box. Nothing on the screen
+    moves while reading. Only turning CC on or off resizes the book.
+
+  Footnotes (new in 1.7)
+  - The button in the Read aloud bar always shows what will happen:
+      "Footnotes: skipped"   (the default) footnotes at the bottom of a page
+                             are not read; reading goes straight on to the
+                             next page.
+      "Footnotes: read"      (button highlighted) footnotes are read after
+                             the page's main text.
+    Click it to switch. Your choice is remembered. If you switch while it is
+    reading, it carries on from the current sentence with the new setting.
+  - How Flipbook finds footnotes: a block of smaller text at the bottom of
+    the page that starts with a note mark - *, †, ‡, §, a number such as 1,
+    (1) or [1], or a small raised number.
+  - Limits: footnotes without a mark, or whose mark the text recognition
+    of a scanned page misread, may not be found (then they are read).
+    Smaller-type passages at the bottom of a page that do not start with a
+    note mark (such as an editor's commentary) are read as normal text.
+    Turn on CC to see exactly what is read.
+
+  Moving around while it reads
+  - ⏮ / ⏭ can be clicked several times quickly; only the sentence you land on
+    is prepared, so the voice is not held up by the ones you skipped.
+  - Sentences already read are kept ready, so going back plays at once.
+  - Every sentence is spoken in one go with the natural AI voice, however
+    long, so it never pauses in the middle as if a new sentence began. The
+    next sentences are prepared while one is being read. Only the first
+    sentence after ▶, a skip or a jump may be split once, at a comma or
+    semicolon, so the voice starts sooner.
+  - The next pages of scanned books are recognised ahead of time.
+
+  Reading speed
+  - From 0.5x (slow) to 2.0x (fast) in steps of 0.1; 1.0x is normal.
+  - Use the slider, the − / + buttons, or the [ and ] keys. Click the speed
+    label to go back to 1.0x.
+  - The label shows the approximate pace, e.g. "1.3x · ~215 wpm".
+  - With the AI voice a speed change applies at once, even mid-sentence.
+    With standard Windows voices it applies from the next sentence.
+  - Up to 1.3x the AI voice is spoken at that pace. Faster than that, it is
+    spoken at 1.3x (where every consonant stays clear) and played back faster
+    without changing the pitch.
+  - Your speed and voice are remembered.
+
+  Voices
+  - Standard Windows voices (e.g. David, Zira, Mark) work right away with no
+    download. They sound more mechanical.
+  - The natural AI voice and the Qwen3-TTS voices are optional add-ons - see
+    section 9.
+  - Removing the standard Windows voices (new in 1.7.7): once you have the
+    natural AI voice or the Qwen3-TTS voices, you can take the Windows
+    voices out of the voice menu: in 🧩 Add-ons, click "Remove..." next to
+    "Standard Windows voices". Windows itself keeps them; "Add back" (same
+    place) brings them back.
+  - At least one voice is always kept. With neither add-on voice installed
+    (as for a new user), the Windows voices can't be removed: Add-ons says
+    so. If you remove your last add-on voice, the Windows voices come back
+    on their own.
+
+  Scanned books
+  - Pages without a text layer are read with text recognition (OCR) first,
+    which takes a few seconds per page ("Recognizing text on page N...").
+  - Old scans can produce recognition mistakes, and those mistakes are read
+    out as they are. Turn on CC to see exactly what is being read; Pages with
+    a real text layer read cleanly.
+
+
+--------------------------------------------------------------------------------
+  9. THE NATURAL AI VOICE, THE GRAPHICS CARD AND QWEN3-TTS (OPTIONAL ADD-ONS)
+--------------------------------------------------------------------------------
+  A high-quality, human-sounding voice with natural pacing and intonation.
+  It is not included in Flipbook.exe, to keep the app small. It is downloaded
+  only if you ask for it.
+
+  Getting it
+  1. Click "🧩 Add-ons" in the tools bar (or at the bottom of Home)
+     and press "Add..." next to "Natural AI voice".
+  2. The Add-ons list shows each add-on's state: "✓ Added", "Not added" or
+     "Downloading NN%". It is in two groups:
+       READ ALOUD VOICES   Natural AI voice, Qwen3-TTS voices and Standard
+                           Windows voices. Each has a "Runs on" line at its
+                           bottom: the natural AI voice lets you choose
+                           (Automatic, graphics card or processor); Qwen3-TTS
+                           runs on the graphics card only and says whether
+                           it is loaded; the Windows voices run on the
+                           processor.
+       WORD LOOK-UP        the Dictionary and the Legal dictionary (Black's
+                           Law).
+  3. A notice explains the download:
+       - Download: about 206 MB, one time, needs internet.
+       - Adds about 206 MB of disk space, in the addons\voice folder next to
+         Flipbook.exe.
+       - After it's installed it works fully offline - no account, no cost,
+         and your books never leave your PC.
+     Choose Download, or Back.
+  4. A progress bar shows the download. You can click "Hide" and keep
+     reading; the progress then shows in the Read aloud bar.
+     "Cancel download" stops it; "Try again" later continues where it
+     stopped instead of starting over.
+  5. Each file is checked against a fixed checksum. A damaged or altered
+     download is deleted and never used.
+  6. When it's done, Flipbook switches to the AI voice automatically.
+
+  Voices included (choose in the voice menu)
+    Heart (recommended), Bella, Nicole, Sarah  - American women
+    Michael, Fenrir, Puck                      - American men
+    Emma, Isabella                             - British women
+    George, Fable, Lewis                       - British men
+
+  Speed
+  - On a typical PC the voice is prepared 3 to 4 times faster than it is
+    spoken, a few sentences ahead, so reading flows without pauses. On older,
+    slower computers there may be a short wait before some sentences.
+  - With a suitable graphics card it can be made several times faster still
+    (see "On the graphics card" below).
+
+  On the graphics card (new in 1.4)
+  Each time Flipbook starts, it checks your graphics card. If the card can
+  make the voice (a real graphics card with at least 2 GB of its own video
+  memory, any make: NVIDIA, AMD or Intel), Flipbook offers the "graphics-card
+  speed-up" and then decides by itself where the voice is made.
+  - Getting it: "🧩 Add-ons" > Natural AI voice > "Add the graphics-card
+    speed-up (326 MB)...". When you add the AI voice itself on such a PC, a
+    tick box adds the speed-up at the same time.
+      - Download: about 326 MB, one time: the same Kokoro voice in a form a
+        graphics card can run. Flipbook prepares it on your PC (a few
+        seconds) in addons\voice\gpu; it then uses about 326 MB.
+  - The self-test: after it is added, and again whenever the graphics card,
+    its driver or Flipbook changes, Flipbook makes two test sentences on the
+    graphics card and on the processor. The graphics card is used only if
+    its voice matches the processor's and it is clearly faster. (On an
+    NVIDIA RTX 3070 laptop: about 4-6x faster than the processor; the voice
+    is prepared about 13 times faster than it is spoken.)
+  - "Runs on" (in 🧩 Add-ons, under Natural AI voice):
+      Automatic (recommended)  Flipbook decides, as described above.
+      Graphics card (GPU)      always the graphics card, when it can be used.
+      Processor (CPU)          always the processor - choose this if the
+                               voice ever sounds wrong or the PC misbehaves.
+    The line under it says which one is in use now and why. "Test again"
+    repeats the self-test.
+  - If the graphics card fails while reading (for example after a driver
+    crash or update), the sentence is made on the processor instead and
+    reading carries on; the Read aloud bar says so. Automatic then stays on
+    the processor until you press "Test again" (or choose Graphics card).
+  - The graphics card works in a separate helper program
+    (Flipbook.exe --voice-worker), so a graphics-card problem can't close
+    Flipbook. It ends when Flipbook ends.
+  - Removing it: "Remove" next to "Graphics-card speed-up" (the voice keeps
+    working on the processor).
+
+  Removing it
+  - "🧩 Add-ons" > "Remove..." next to "Natural AI voice", then confirm.
+    Read aloud goes back to the standard Windows voice. You can download the
+    AI voice again at any time.
+
+  Computers without internet
+  - Download the add-on on another PC, then copy its whole "addons\voice"
+    folder into the folder that holds Flipbook.exe on the offline PC.
+    (Files: addons\voice\kokoro-v1.0.fp16.onnx and voices-v1.0.bin)
+
+  Where it comes from
+  - The Kokoro v1.0 voice model (Apache License 2.0), downloaded from the
+    kokoro-onnx project's release page on GitHub:
+    https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.0
+    kokoro-v1.0.fp16.onnx  177,464,787 bytes  SHA-256
+      C1610A859F3BDEA01107E73E50100685AF38FFF88F5CD8E5C56DF109EC880204
+    voices-v1.0.bin         28,214,398 bytes  SHA-256
+      BCA610B8308E8D99F32E6FE4197E7EC01679264EFED0CAC9140FE9C29F1FBF7D
+    Graphics-card speed-up (same release, same voice, full precision):
+    kokoro-v1.0.onnx       325,532,387 bytes  SHA-256
+      7D5DF8ECF7D4B1878015A32686053FD0EEBE2BC377234608764CC0EF3636A6C5
+
+  Qwen3-TTS voices (new in 1.4, NVIDIA graphics cards only)
+  A higher-end choice: very natural, expressive voices made on the graphics
+  card by Alibaba's open Qwen3-TTS model (the 0.6-billion-parameter
+  "CustomVoice" model). They are offered only if your PC can run them:
+  an NVIDIA RTX 30-series or newer graphics card with at least 6 GB of
+  video memory and a recent driver. Otherwise "🧩 Add-ons" shows
+  "Not available on this PC" and says why.
+  - Getting them: "🧩 Add-ons" > "Add..." next to "Qwen3-TTS voices".
+      - Download: about 5.4 GB, one time, needs internet. It holds the voice
+        model (2.5 GB) and its own private copy of Python with the PyTorch
+        graphics-card (CUDA) libraries - nothing is installed into Windows.
+      - Uses about 7.4 GB of disk space, in the addons\qwen folder.
+      - Every file is checked against a fixed checksum; "Cancel" stops it
+        and adding it again continues where it stopped.
+      - The download and install take several minutes; you can keep
+        reading meanwhile. The progress shows in the Add-ons list.
+  - Using them: in the Read aloud bar's voice menu, under "Qwen3-TTS voices
+    (graphics card)": Ryan and Aiden (the model's two English voices).
+    They appear there as soon as the install finishes, even if you closed
+    the Add-ons window meanwhile, and the Read aloud bar says "Qwen3-TTS
+    voices installed ✓". No restart is needed.
+  - The first time you choose one after starting Flipbook, it takes about
+    20 seconds to load onto the graphics card. After that it makes speech
+    about twice as fast as it is spoken (on an RTX 3070 laptop), a few
+    sentences ahead.
+  - Speed: these voices have no speed setting of their own, so the speed
+    slider plays them faster or slower (the pitch is kept). The natural AI
+    voice sounds better at very fast speeds.
+  - They run in their own helper program, so a problem there can't close
+    Flipbook; if it stops, the next sentence starts it again.
+  - Removing them: "🧩 Add-ons" > "Remove..." next to "Qwen3-TTS voices".
+  - Where they come from: Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice (Apache 2.0,
+    Qwen team, Alibaba Cloud) from Hugging Face, run with faster-qwen3-tts
+    (MIT) and PyTorch (BSD) - the exact files and checksums are listed inside
+    Flipbook (qwen.py in the source).
+
+
+--------------------------------------------------------------------------------
+ 10. WORD LOOK-UP AND THE DICTIONARY (OPTIONAL ADD-ON)
+--------------------------------------------------------------------------------
+  Find out what a word means and where it comes from.
+
+  Looking up a word
+  - Right-click any word on the page, or
+  - turn on Look-up mode with "🔍 Look up words" in the tools bar (or
+    press D) and click words. In Look-up mode clicks define words instead of turning pages; use
+    the arrows or keys to turn pages. Press D again to turn it off.
+  - The word is outlined on the page and a card opens next to it.
+  - Close the card with ✕, Esc, or by clicking elsewhere.
+
+  What the card shows
+  - The word and its pronunciation, with 🔊 to hear it in your Read aloud
+    voice.
+  - Meanings, grouped by noun / verb / adjective / adverb, with an example
+    and similar words (from Open English WordNet - modern usage).
+  - ETYMOLOGY - where the word comes from, e.g. for "candidate":
+    "L. Candidatus ... (because candidates for office in Rome were clothed
+    in a white toga.) fr. candidatus clothed in white".
+  - Webster's 1913 definitions - often the sense the word had when older
+    books were written.
+  - Word forms are understood: "travelled" shows "travel", "libraries"
+    shows "library".
+  - Misread words from old scans get suggestions: "efiect" offers "effect",
+    "rnodern" offers "modern". Click a suggestion to look it up.
+  - "Aa" opens the pronunciation fixes for that word (section 11).
+  - "More on Wiktionary ↗" opens the word on Wiktionary in your web browser.
+    Only this link uses the internet, and only when you click it.
+
+  Getting the Dictionary
+  - Click "🧩 Add-ons" in the tools bar and press "Add..." next to
+    "Dictionary". (The first time you look up a word, the card also offers
+    it, and so does "🧩 Add-ons" at the bottom of Home.) A notice explains it:
+       - Download: about 40 MB, one time, needs internet, from Project
+         Gutenberg and the Open English WordNet project.
+       - Flipbook then builds the dictionary on your PC (about half a minute)
+         in the addons\dictionary folder (about 46 MB).
+       - Afterwards it works fully offline; nothing you look up is sent
+         anywhere.
+  - A progress bar shows the download and the building. "Cancel" stops it;
+    trying again continues where it stopped. Downloads are checked against
+    fixed checksums.
+  - When it is ready, Look-up mode switches on.
+
+  Removing it
+  - "🧩 Add-ons" (tools bar, or the bottom of Home) > "Remove..."
+    next to "Dictionary", then confirm.
+
+  Computers without internet
+  - Build it on another PC, then copy the whole "addons\dictionary" folder
+    next to Flipbook.exe on the offline PC (the file inside is
+    dictionary.sqlite).
+
+  Legal or Etymology: the switch under "🔍 Look up words"
+  - Right under "🔍 Look up words" in the tools bar is a small switch:
+    "Etymology | ⚖ Legal". It sets which dictionary a look-up uses, and is
+    remembered. In icons-only view it is one small button ("Ety" or "⚖");
+    click it to switch.
+       Etymology   the general dictionary described above (meanings and
+                   word origins), with any general dictionary you added
+                   from your own PDFs shown first.
+       ⚖ Legal     Black's Law Dictionary and any law dictionary you added
+                   from your own PDFs, for law books such as Coke's
+                   "Institutes of the Lawes of England" or Blackstone.
+  - With ⚖ Legal, a word is looked up in every edition of Black's you have
+    added, newest first (5th, 4th, 2nd), so you can compare them, then in
+    your own law dictionaries in the order you added them. Under
+    the definitions are related legal terms (for "fee": "Fee simple",
+    "Fee tail", ...; click one to look it up) and the word's etymology
+    from the general dictionary, if that is added too.
+  - A word that has no legal definition in any of them is shown from the
+    general (etymology) dictionary instead, with a note saying so.
+  - "General dictionary for ..." at the bottom of a legal card shows the
+    word's everyday meaning.
+
+  Getting the Legal dictionary
+  - "🧩 Add-ons" > "Legal dictionary (Black's Law)" > "Add..." (or set the
+    switch to ⚖ Legal and right-click a word: the card offers it). The
+    window has two steps:
+    1. The free ones. "Get the free ones" downloads, one time:
+       - Black's Law Dictionary, 2nd edition (1910), public domain, about
+         7 MB from archive.org, and
+       - the general Dictionary (about 40 MB), if it isn't added yet. It
+         answers when a word has no legal meaning, and adds word origins.
+       One progress window shows both.
+    2. Your own copies (optional):
+       - "Add your Black's PDFs (folder)...": choose the folder holding one
+         edition's PDF files, for example your 4th or 5th edition, or a
+         folder that holds both editions' folders: then both are added,
+         one after the other. Flipbook recognises the edition from its
+         title page (or the folder's name), reads the PDFs once and builds
+         the dictionary in the addons\legal folder next to Flipbook.exe.
+         It takes a few minutes for a whole edition.
+       - "Add another law dictionary...": any other law dictionary in PDF,
+         such as Bouvier, Ballentine or Osborn (see "A dictionary of your
+         own" below).
+  - The PDFs need a text layer (text you can select), not just scanned
+    images. Your copies stay on this PC: they are never uploaded, and
+    nothing you look up is sent anywhere.
+  - Each edition can be removed on its own: "🧩 Add-ons" > "Remove" next to
+    it. Your own PDF files are never touched.
+
+  A dictionary of your own (PDF)
+  - "🧩 Add-ons" > "Your own dictionaries (PDF)" > "Add a dictionary...".
+    Choose "PDF files..." for one PDF or the volumes of one dictionary
+    (hold Ctrl to pick several), or "A folder..." for a dictionary split
+    into files, such as one PDF per letter.
+  - Flipbook suggests a name (you can change it) and asks which kind it is:
+       ⚖ Legal               shown when the switch is on ⚖ Legal, after
+                             Black's Law.
+       Etymology / general   shown when the switch is on Etymology, above
+                             Webster's. Use it for an etymology dictionary,
+                             a general dictionary or any other.
+    "Add it" reads the dictionary once (a few minutes for a big book; you
+    can go on reading meanwhile) and keeps its entries in the
+    addons\mydicts folder next to Flipbook.exe. The PDF is not copied or
+    changed, and nothing is sent anywhere.
+  - Flipbook works out by itself how the book marks its entries: headwords
+    in bold, in CAPITALS, or sticking out to the left, and it checks that
+    they run in alphabetical order. A PDF that isn't a dictionary (a book
+    or an article) is refused with a message.
+  - In "🧩 Add-ons" each one has "Rename", "Make it Etymology / ⚖ Legal"
+    and "Remove". Up to 20 can be added.
+
+  Good to know
+  - A dictionary of your own is read without knowing its layout, so some
+    entries may be cut short, run into the next one, or be missing,
+    especially in old scans or unusual layouts. A scan with no text in it
+    (pictures of pages only) can't be read; run it through text
+    recognition (OCR) first.
+  - Black's 2nd edition comes from an old scan read by text recognition,
+    so a few entries have misread letters or two entries run together.
+  - Old spellings (as in Coke: "lawes", "seisin") are found only when
+    Black's lists that spelling.
+  - Some Greek words in Webster's etymologies were lost in the digital
+    edition used, so a few etymologies are shortened (e.g. "Gr." with the
+    Greek word missing). The Wiktionary link helps for those.
+  - Some names and specialist terms are missing (common ones such as
+    Minerva, Saturn and Jupiter are included); use the Wiktionary
+    link for the rest.
+
+  Where it comes from
+  - Webster's Revised Unabridged Dictionary (1913), public domain,
+    Project Gutenberg eBook #29765:
+    https://www.gutenberg.org/files/29765/29765-0.txt
+      28,936,640 bytes  SHA-256
+      4D9C7A6F3B27ADD378AEA8DB3AFC4D9190C2F4A6BD4341755B514155AB91873A
+  - Open English WordNet, 2025 edition (CC BY 4.0):
+    https://github.com/globalwordnet/english-wordnet/releases/download/2025-edition/english-wordnet-2025.xml.gz
+      11,363,503 bytes  SHA-256
+      9CA6D1DCB75F822FDD66617F7D9DA48142ACE38DD544D6AD5E2FECA1674AD3FE
+  - Black's Law Dictionary, 2nd edition (1910), by Henry Campbell Black,
+    public domain; text recognised from a scan, from archive.org:
+    https://archive.org/details/blacks-law-dictionary-2nd-edition-1910
+      7,190,959 bytes  SHA-256
+      AC302A5763C474F2236EF347E8649285AA3E0BCABD6CB22841BA91A468406F6E
+  - The 4th and 5th editions are not supplied with Flipbook: they are built
+    only from your own copies, on your PC.
+
+
+--------------------------------------------------------------------------------
+ 11. PRONUNCIATION FIXES
+--------------------------------------------------------------------------------
+  If Read aloud says a word wrongly, you can tell it how the word sounds.
+
+  - Click "Aa" in the Read aloud bar (or "Aa" on a word's look-up card).
+  - Type the word, then spell it the way it is said, using ordinary letters,
+    e.g.  Worcestershire  ->  wuss ter sher
+  - Press ▶ next to it to listen; "Add" saves it; ✕ deletes it.
+  - Fixes apply to every book and to both kinds of voice, from the next
+    sentence on.
+  - Built in already: old spellings such as to-day, to-morrow, shew, shewn,
+    connexion, mediaeval, encyclopaedia are read the modern way, and printed
+    ligatures (ﬀ ﬁ ﬂ) are read as normal letters.
+  - Tip: turn on CC first to see exactly what text the voice was given. If
+    the caption shows a misread word (e.g. "efiect"), the problem is the old
+    scan, not the voice.
+
+
+--------------------------------------------------------------------------------
+ 12. LIGHT AND DARK THEMES
+--------------------------------------------------------------------------------
+  - Click "Light theme" / "Dark theme" in the tools bar, or press T.
+  - The first time, Flipbook follows your Windows light/dark setting. After
+    you choose, it remembers your choice.
+  - The pages themselves always show the PDF's own colours.
+  - Drop-down lists, such as the Voice menu, follow the theme too. Their
+    group titles are solid bars with bold text: white on slate grey in the
+    dark theme, near-black on pale blue-grey in the light theme. The choice
+    in use is highlighted in blue with bold text.
+
+
+--------------------------------------------------------------------------------
+ 13. KEYBOARD AND MOUSE CONTROLS
+--------------------------------------------------------------------------------
+  Right arrow / Page Down / Space   Next page (with Read aloud open, see
+                                    below)
+  Left arrow / Page Up              Previous page
+  Space (Read aloud open)           Read aloud: pause / resume
+  Left / Right arrow (Read aloud    Read aloud: previous / next sentence
+    reading or paused)
+  Home                              First page
+  End                               Last page
+  G                                 Go to a page number
+  ?                                 Show all commands
+  C                                 Show / hide the Contents sidebar
+  B                                 Add a bookmark on this page in the last
+                                    colour used, or remove it
+  R                                 Read aloud: start / pause / resume
+  [  and  ]                         Read aloud: slower / faster
+  D                                 Look-up mode on / off
+  L                                 Page links on / off
+  Backspace  or  Alt+Left arrow     Back to where you followed a link
+  T                               Switch light / dark theme
+  F                                 Full screen on / off (only the book;
+                                    plus the caption if CC is on)
+  Esc                               Close a word card, a dialog or the
+                                    close-up; leave full screen
+  Enter (in the Page box)           Go to that page
+
+  Mouse wheel                       Turn pages
+  Click a page                      Turn it (right page: next, left: back)
+  Click a link or a contents line   Go to its page (the pointer is a hand)
+  Drag a page corner                Turn the page by hand
+  Double-click a page               Open it large for close reading
+  Right-click a word                Look it up
+  Click a word (Look-up mode)       Look it up
+  Click a sentence (Read aloud on)  Read from that sentence
+
+  Click the ribbon spot on a page   Bookmark that page (a faint ribbon
+                                    with "+" shows where); click a solid
+                                    ribbon (shows ✕) to remove it
+
+  Shortcuts are ignored while you are typing in a text box.
+  If keys do nothing, click once on the book so the window has focus.
+  The same list is in the app: "⌨ Commands" in the tools bar, or press ?.
+  "ⓘ About", just under it, opens this manual and the version history;
+  Esc closes it. In About, Page Up / Page Down, Home, End and the arrow
+  keys scroll the text.
+
+
+--------------------------------------------------------------------------------
+ 14. WHERE YOUR DATA IS STORED
+--------------------------------------------------------------------------------
+  In this folder:
+    flipbook-data\         Bookmarks, table-of-contents results (one small
+                           file per book) and your pronunciation fixes.
+                           Back this folder up to keep them.
+                           voice-device.json in it holds the "Runs on"
+                           choice and the last graphics-card test.
+    addons\voice\          The natural AI voice, if you downloaded it
+                           (addons\voice\gpu\: its graphics-card speed-up).
+    addons\dictionary\     The Dictionary, if you downloaded it.
+    addons\legal\          The Legal dictionary, if you added it (built
+                           from Black's 2nd edition and your own PDFs).
+    addons\mydicts\        Dictionaries you added from your own PDFs
+                           (mydicts.sqlite: their entries only, not the
+                           PDFs).
+
+  In your Windows user profile:
+    %LOCALAPPDATA%\Flipbook\WebView\    Last page read and last sentence
+                                        read aloud per book, theme, sidebar,
+                                        tools bar view (names / icons only),
+                                        whether the first-run tip was seen,
+                                        Read aloud voice, speed, caption,
+                                        follow and footnotes settings, and
+                                        the bookmark colour chosen last
+                                        (each bookmark's own colour is saved
+                                        with the bookmark in flipbook-data\).
+    %LOCALAPPDATA%\Flipbook\error.log   Written only if something goes wrong.
+
+  Note: bookmarks and contents of every book are saved in flipbook-data\,
+  however the book was opened. Since 1.5, books opened in the Flipbook app
+  (the Library, "Open a PDF...", dragging, "Open with") are also on your
+  book list. (When Flipbook runs in a web browser via "Open Flipbook.bat",
+  a PDF picked with "Open a PDF..." can't be added to the list, because the
+  browser doesn't tell Flipbook where the file is.)
+  books.json in flipbook-data\ is the book list: each book's location, the
+  page you got to and when you read or added it.
+
+  Books are recognised by their content, not their file name or location,
+  so renaming or moving a PDF keeps its bookmarks and contents.
+
+  Flipbook never changes, copies or uploads your PDFs. Read aloud and word
+  look-up run on your PC; no text, words or audio are sent anywhere. Flipbook
+  only uses the internet to download an add-on, and only when you ask it to
+  (and the Wiktionary link opens your browser only when you click it).
+
+
+--------------------------------------------------------------------------------
+ 15. MOVING, COPYING OR UPDATING FLIPBOOK
+--------------------------------------------------------------------------------
+  - Move or copy the whole folder. Keep Flipbook.exe, flipbook-data\ and
+    addons\ together to keep your bookmarks, contents, pronunciation fixes
+    and add-ons.
+  - Shortcuts you made point at the old location; delete and recreate them
+    after moving.
+  - On another PC, books open at page 1 the first time (the last-page memory
+    lives in the user profile, see section 14); bookmarks and contents saved
+    in flipbook-data\ come along with the folder.
+
+  Updating from an earlier version (1.0.0 - 1.4.0): close Flipbook, replace
+  Flipbook.exe with the new one and keep everything else. Your bookmarks,
+  contents, settings and add-ons carry over. The book list starts with the
+  PDFs in this folder and fills up as you open books.
+
+  Uninstalling: close Flipbook and delete this folder. To remove everything,
+  also delete %LOCALAPPDATA%\Flipbook and any shortcuts you made. Nothing is
+  installed into Windows.
+
+
+--------------------------------------------------------------------------------
+ 16. TROUBLESHOOTING
+--------------------------------------------------------------------------------
+  "Windows protected your PC" on first start
+     Click "More info" > "Run anyway" (see section 3).
+
+  Message that WebView2 Runtime is required
+     Install it from https://developer.microsoft.com/microsoft-edge/webview2/
+     (choose "Evergreen Bootstrapper"), then start Flipbook again.
+
+  Nothing happens when I double-click, or the window is blank
+     Wait a few seconds; the first start unpacks the app and is slower.
+     Check Task Manager for a stuck "Flipbook" and end it, then try again.
+     Look in %LOCALAPPDATA%\Flipbook\error.log for details.
+
+  A book doesn't appear in the Library
+     Open it once ("📂 Open a PDF..." on Home, or drag it in), or add it with
+     "＋ Add PDFs to your library..." - from then on it stays on the list. If
+     you removed it from the list earlier, opening it again puts it back.
+
+  A book on the list says "File not found"
+     The PDF was moved, renamed or deleted. Open it from its new place (it
+     is listed again, with its bookmarks) and remove the old entry with ✕.
+
+  "Continue reading" isn't shown when Flipbook starts
+     It appears once you have opened a book in the app. If Flipbook was
+     started by opening a PDF ("Open with" or dragging onto Flipbook.exe),
+     that PDF opens directly instead; click "Library" to see your books.
+
+  Where are the Add-ons?
+     On Home (bottom left, "🧩 Add-ons") and, while reading, in the tools bar
+     on the right. They are not in the Library, which only holds your books.
+
+  Keyboard shortcuts don't work
+     Click on the book once, and make sure the cursor isn't in a text box
+     (for example the Page box in the tools bar).
+
+  I can't find a button that used to be in the top bar
+     Since 1.3.0, Go to page, Look up, Read aloud, Bookmark, theme and Full
+     screen are in the tools bar on the right. If it shows icons only, hover
+     over an icon to see its name, or click » / « at the top to show names.
+
+  The pages look small
+     Both sidebars take space. Close the Contents sidebar (C), or switch the
+     tools bar to icons only (» at its top).
+
+  Clicking the page doesn't turn it
+     Look-up mode (🔍) is on, or Read aloud is open and you clicked text.
+     Press D to leave Look-up mode, click the page margin, or use the arrows.
+
+  The table of contents is empty or incomplete
+     The background scan may still be running - see the progress at the top
+     of the sidebar, and press Resume if it was stopped. Books without clear
+     headings may produce few entries.
+
+  Read aloud makes no sound
+     Check the Windows volume and output device. Make sure a voice is
+     selected in the voice menu. Press ⏹ and then ▶ to start again.
+
+  Read aloud stopped after I turned the page
+     That is on purpose: it paused to keep your place (section 8). Turn back,
+     click "↩ p. N", or press ▶ to read the pages you are on now. Turn on ⤳ if
+     you'd rather have reading follow your page turns.
+
+  Read aloud reads the footnotes (or skips them) and I want the opposite
+     Look at the "Footnotes:" button in the Read aloud bar and click it to
+     switch between "skipped" and "read" (section 8). If footnotes are still
+     read while it says "skipped", that page's notes have no mark Flipbook
+     can recognise (common on poor scans).
+
+  I can't tell whether a page is bookmarked
+     A bookmarked page has a solid, fully coloured ribbon at its top right
+     corner; a faint outline only means "click here to bookmark". The
+     Bookmarks tab of the sidebar lists every bookmark (section 7).
+
+  Read aloud says "Finding the text..." or "Recognizing text..." for a while
+     The page is a scan and is being read with OCR first (a few seconds per
+     page). Pages that are pictures only have nothing to read and are skipped.
+
+  A word is read wrongly
+     Turn on CC to see the text being read. If the text is right, add a
+     pronunciation fix (section 11). If the text itself is wrong, the scan
+     was misread; there is nothing the voice can do about that.
+
+  The AI voice pauses between sentences
+     The computer is preparing speech slower than it is spoken. Close other
+     heavy programs, let the table-of-contents scan finish, or use a slightly
+     faster reading speed. If your PC has a graphics card, add the
+     graphics-card speed-up (section 9).
+
+  "Graphics card failed ... the processor is used" / reading moved to the
+  processor
+     The graphics card or its driver had a problem, so Flipbook switched to
+     the processor to keep reading. Restarting the PC or updating the graphics
+     driver usually helps; then press "Test again" under 🧩 Add-ons > Natural
+     AI voice > Runs on.
+
+  The AI voice sounds different or wrong on the graphics card
+     Choose "Processor (CPU)" under 🧩 Add-ons > Natural AI voice > Runs on.
+     Flipbook remembers the choice.
+
+  The Qwen3-TTS voices say "Not available on this PC"
+     They need an NVIDIA RTX 30-series or newer graphics card with at least
+     6 GB of video memory; the reason shown tells you what is missing (for
+     example an old driver - update it from nvidia.com and restart Flipbook).
+
+  A Qwen3-TTS voice takes a long time before it starts
+     The first sentence after starting Flipbook loads the voice onto the
+     graphics card (about 20 seconds; longer on the very first run). Keep the
+     laptop plugged in: on battery the graphics card is much slower.
+
+  The graphics-card speed-up isn't offered
+     The line under "Runs on" says why: for example no graphics card was
+     found, or it has less than 2 GB of its own video memory (built-in
+     laptop graphics usually doesn't). The voice works on the processor.
+
+  An add-on download fails or stops
+     Check the internet connection and choose "Try again" - it continues
+     where it stopped. "Can't write to the Flipbook folder" means the folder
+     is read-only (e.g. in Program Files); move Flipbook to Documents.
+     If a checksum fails repeatedly, the source file may have been changed
+     upstream; please report it. Offline PCs: see sections 9 and 10.
+
+  Last-read page, theme or reading voice was forgotten
+     Flipbook normally uses one fixed local address. If another program (or a
+     second Flipbook window) was using it, Flipbook picks the next one and
+     these settings start fresh for that window. Use one Flipbook window at a
+     time to avoid this.
+
+  Antivirus warns about Flipbook.exe
+     Unsigned apps packaged with PyInstaller are sometimes flagged by mistake.
+     You can check that your copy is genuine with the file "Flipbook -
+     SHA-256 checksum.txt" (section 17).
+
+  Firewall prompt
+     Flipbook's reader only talks to itself on 127.0.0.1 (this computer). It
+     needs no incoming network access; it is safe to deny any prompt.
+
+
+--------------------------------------------------------------------------------
+ 17. TECHNICAL DETAILS
+--------------------------------------------------------------------------------
+  Version            1.8.0
+  File               Flipbook.exe, 64-bit Windows
+  Checksum           The exe's SHA-256 checksum and exact size are in a
+                     separate file next to it, "Flipbook - SHA-256
+                     checksum.txt", with steps for checking them. They are
+                     kept out of this manual because the manual is built
+                     into the exe: a file can't contain its own checksum.
+                     Get the checksum from the same place you got
+                     Flipbook.exe, never from the app itself.
+  Built with         Python 3.13, PyInstaller 6.22 (single-file, windowed)
+  Window             pywebview 6.2 on Microsoft Edge WebView2
+  How it works       Flipbook.exe starts a small private web server on
+                     127.0.0.1 (port 47863, or the next free one) that only
+                     this computer can reach, and shows the reader in its own
+                     window. The server reads PDFs in pieces, so even very
+                     large books (6,000+ pages, hundreds of MB) open quickly.
+                     Requests that change anything must come from the
+                     Flipbook page itself; other web pages are refused.
+  Security           (1.8.6) The server answers only requests addressed
+                     to 127.0.0.1 or localhost on its own port, so a
+                     website can't reach it by pointing its own name at
+                     this computer ("DNS rebinding"). The reader page may
+                     only talk to Flipbook itself and may not turn text
+                     into program code (a Content Security Policy).
+                     Since 1.8.7 the PDF engine is PDF.js 6.5, which no
+                     longer contains the code behind CVE-2024-4367 (a
+                     crafted PDF font running script) at all; the policy
+                     stays as a second layer. Book paths sent from the page
+                     must be local: network paths (\\server\share) are
+                     ignored there, because even looking one up makes
+                     Windows send your login to that server. (The Open
+                     dialog and drag-and-drop still accept them.)
+  PDF engine         PDF.js 6.5.438 (with character maps and standard fonts
+                     for PDFs that don't embed their fonts, and its
+                     WebAssembly decoders for JPEG 2000 and JBIG2 scanned
+                     images and for colour profiles)
+  Text recognition   Tesseract.js 5.1.1, English language data
+  Read aloud         Standard voices: Windows speech (Web Speech API).
+                     AI voice: Kokoro v1.0 (82M parameters, fp16 ONNX model)
+                     run with ONNX Runtime 1.23 on the CPU, 24 kHz audio;
+                     or, with the graphics-card speed-up, the fp32 model
+                     adapted for DirectML (text part on the CPU, sound part
+                     on the graphics card, in a helper process);
+                     pronunciation by eSpeak NG (English data only). Speech is
+                     made at most at 1.3x and time-stretched beyond that
+                     (pitch kept). Requests carry a position number; the
+                     voice engine drops outdated ones and serves the sentence
+                     about to be spoken before ones prepared in advance.
+  Qwen3-TTS voices   Qwen3-TTS-12Hz-0.6B-CustomVoice (bf16) with
+                     faster-qwen3-tts (CUDA graphs) and PyTorch 2.10 + CUDA
+                     12.8 in a private Python 3.12 in addons\qwen, run as a
+                     helper process; 24 kHz audio.
+  Dictionary         SQLite database built on your PC from Webster's 1913
+                     and Open English WordNet 2025: about 189,000 headwords,
+                     16,000 word forms; lookups take a few milliseconds.
+  Font               EB Garamond (Latin character sets)
+
+
+--------------------------------------------------------------------------------
+ 18. THIRD-PARTY SOFTWARE AND LICENSES
+--------------------------------------------------------------------------------
+  Flipbook includes the following open-source software:
+
+  PDF.js 6.5.438             Mozilla Foundation    Apache License 2.0
+    with: OpenJPEG decoder   OpenJPEG authors      BSD 2-Clause License
+          JBIG2 decoder      PDFium authors        BSD 3-Clause License
+          qcms colour engine Mozilla, Marti Maria  MIT License
+          Adobe CMaps        Adobe                 BSD-style (see its LICENSE)
+          standard fonts     Foxit / PDFium authors, BSD-style; Liberation
+                             fonts, SIL Open Font License 1.1
+          CMYK colour profile                      CC0 1.0 (public domain)
+  Tesseract.js 5.1.1         Tesseract.js authors  Apache License 2.0
+  Tesseract OCR engine       Google / contributors Apache License 2.0
+  English OCR data           tesseract-ocr         Apache License 2.0
+  EB Garamond                Georg Duffner, Octavio Pardo
+                                                   SIL Open Font License 1.1
+  pywebview 6.2              Roman Sirokov et al.  BSD 3-Clause License
+  Python 3.13                Python Software Foundation
+                                                   PSF License Agreement
+  pythonnet 3.2              .NET Foundation       MIT License
+  ONNX Runtime 1.23 (DirectML build)
+                             Microsoft             MIT License
+  DirectML                   Microsoft             Microsoft DirectML license
+                                                   (redistributable, shipped
+                                                   with ONNX Runtime)
+  ONNX 1.19                  ONNX project          Apache License 2.0
+  Protocol Buffers           Google                BSD 3-Clause License
+  NumPy 2.2                  NumPy developers      BSD 3-Clause License
+  eSpeak NG                  eSpeak NG contributors
+                                                   GNU GPL version 3
+                             Source code: https://github.com/espeak-ng/espeak-ng
+  SQLite                     SQLite authors        Public domain
+  pypdf 7.0                  pypdf contributors    BSD 3-Clause License
+                             (reads your own Black's Law PDFs)
+  Microsoft Edge WebView2    Microsoft             (not included; uses the copy
+                                                   installed in Windows)
+
+  Optional add-ons (downloaded only on request, not part of Flipbook.exe):
+  Kokoro-82M v1.0 voice model   hexgrad            Apache License 2.0
+  kokoro-onnx model files       thewh1teagle       MIT License
+  Webster's Revised Unabridged Dictionary (1913)   Public domain
+                                (Project Gutenberg eBook #29765)
+  Black's Law Dictionary, 2nd edition (1910)       Public domain
+                                (archive.org scan)
+  Qwen3-TTS-12Hz-0.6B-CustomVoice   Qwen team, Alibaba Cloud
+                                                   Apache License 2.0
+  faster-qwen3-tts, qwen-tts-hf     their authors  MIT / Apache License 2.0
+  PyTorch 2.10 (CUDA 12.8 build)    PyTorch contributors
+                                                   BSD 3-Clause License (bundles
+                                                   NVIDIA CUDA libraries under
+                                                   NVIDIA's redistribution terms)
+  Hugging Face transformers, accelerate, tokenizers, safetensors
+                                                   Apache License 2.0
+  Python 3.12 (embeddable)          Python Software Foundation
+                                                   PSF License Agreement
+    (all only in addons\qwen, and only if you add the Qwen3-TTS voices)
+  Open English WordNet (2025 edition) by John P. McCrae et al. and the Global
+  WordNet Association, https://github.com/globalwordnet/english-wordnet,
+  licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/);
+  based on Princeton WordNet 3.0 (c) Princeton University.
+
+  The PDFs you read are not part of Flipbook and keep their own copyright.
+
+
+--------------------------------------------------------------------------------
+  VERSION HISTORY
+--------------------------------------------------------------------------------
+  1.8.20  (2026-11-15)  Everyday examples.
+     - The examples in this manual and in the pronunciation fixes window
+       are everyday words now ("candidate", "travelled", "libraries",
+       "Worcestershire"), and the graphics-card voice test speaks neutral
+       sentences. Nothing else changed.
+  1.8.19  (2026-11-15)  The page's title is "Flipbook".
+     - The page's title still had a working name from the very first
+       version. It is now simply "Flipbook".
+  1.8.18  (2026-11-15)  Add dictionaries of your own from PDF files.
+     - Add-ons: "Your own dictionaries (PDF)": add any dictionary you have
+       as a PDF, as a legal one (shown under ⚖ Legal, after Black's) or a
+       general / etymology one (shown under Etymology, above Webster's).
+       Flipbook finds the entries by itself, whatever the layout.
+     - A folder holding both the Black's 4th and 5th edition folders adds
+       both editions, one after the other.
+     - The Legal dictionary window: "Get the free ones" (Black's 2nd
+       edition and the general Dictionary together), then your own copies.
+  1.8.17  (2026-11-14)  A legal dictionary (Black's Law).
+     - A switch under "🔍 Look up words": Etymology or ⚖ Legal. Legal looks
+       a word up in Black's Law Dictionary: every edition you have added,
+       newest first, with related legal terms and the word's etymology.
+     - A word with no legal definition is shown from the general dictionary.
+     - Add-ons: "Legal dictionary (Black's Law)": download the free 2nd
+       edition (1910), or add your own 4th / 5th edition PDFs from their
+       folder. They are read once and kept only on your PC.
+  1.8.16  (2026-11-13)  Space and the arrow keys control Read aloud.
+     - While the Read aloud bar is open, Space pauses and resumes reading
+       (or starts it), instead of turning the page under the voice.
+     - While reading or paused, Left / Right arrow go to the previous / next
+       sentence, like ⏮ / ⏭.
+     - With Read aloud closed, Space and the arrow keys turn pages as before.
+       Page Up / Page Down always turn pages.
+  1.8.15  (2026-11-12)  Headings are read on their own.
+     - Read aloud used to treat only ALL-CAPS lines as headings, so a title
+       such as "The Early Years" and the section heading under it were
+       read as one sentence with the first sentence of the chapter. Now a
+       heading is also spotted by its larger type, the space after it, a
+       short title line without a full stop, or "Chapter IV" / "Book 2" /
+       "Part One". Each is read as its own phrase ending with a full stop.
+     - A footnote number printed small after a word ("Years²⁴",
+       "things.”¹⁹") is no longer read out, and the sentence before it ends
+       properly. A raised footnote number no longer splits a heading line.
+
+  1.8.14  (2026-11-12)  Dollar amounts are read as money.
+     - "$1,250.75" is "one thousand two hundred fifty dollars and
+       seventy-five cents" (1.8.13 said "dollar one thousand two hundred
+       fifty point seventy-five"). Also "$1" one dollar, "$0.50" fifty
+       cents, "$3.01" three dollars and one cent, "$4.5 million" four point
+       five million dollars. "$1850" is an amount, not a year.
+
+  1.8.13  (2026-11-12)  Numbers are read as numbers.
+     - The AI voice splits text at commas and full stops for natural
+       phrasing, so "4,000" was read "four, zero zero zero", "1,500" "one,
+       five hundred" and "3.5" "three. five". Thousands commas are now
+       dropped before speaking and a decimal point is read as "point".
+       Years (1717 -> seventeen seventeen) and lists ("1, 2, 3") are as
+       before.
+
+  1.8.12  (2026-11-12)  No more pauses in the middle of long sentences.
+     - The natural AI voice spoke every sentence over 130 characters in
+       pieces (even between two plain words); each piece ended with a
+       sentence-like fall and pause. In one test book that was about 180
+       mid-sentence pauses in 50 pages.
+     - Each sentence is now one recording, prepared while the one before
+       is read. Only the first sentence after ▶, a skip or a jump may be
+       split once, at a comma or semicolon (speech starts in about 1-2 s).
+
+  1.8.11  (2026-11-12)  The voice menu lists only voices.
+     - The "Add or remove voices" group is gone from the Read aloud voice
+       menu (Get / Remove the AI voice, Remove / Add back the Windows
+       voices). All of it is in 🧩 Add-ons, as before.
+
+  1.8.10  (2026-11-12)  A tidier Commands window.
+     - The "Add-ons..." button and the add-ons note are gone from the
+       ⌨ Commands window; 🧩 Add-ons stays in the tools bar.
+
+  1.8.9  (2026-11-12)  Page links work in many more books.
+     - Printed page numbers are now found by where they are on the page
+       (alone near the top or bottom edge, or in a short running head),
+       not by where the PDF happens to store them. Books whose numbers are
+       at the foot and stored right after the head said "Couldn't find
+       page" for most entries.
+     - The top line of a contents page is no longer mistaken for a running
+       head, so it is clickable again.
+     - One-word entries glued to their dots and page number are links, and
+       the glued word is no longer cut from a title.
+     - Headings without a page number go to the page of the first entry
+       under them.
+
+  1.8.8  (2026-11-12)  Page links: click a contents line to go to its page.
+     - A click on a line of a printed contents page goes to that page. The
+       printed page number is found in the file from the page numbers in
+       the running heads, so plates and front matter don't throw it off.
+       Scanned books are read with text recognition for this.
+     - Links built into a PDF work too; web links only show their address.
+     - Only a click right on a link follows it: other clicks still turn the
+       page, a drag always turns it, and a double-click on a link doesn't
+       also open the close-up. The pointer becomes a hand over a link.
+     - "↩ Back to page N" in the bottom bar, Backspace or Alt+← go back.
+     - "🔗 Page links" in the tools bar (L) switches links off and on.
+
+  1.8.7  (2026-11-11)  A tidier version history; PDF.js 6.5 and Python 3.13.
+     - Version history: one entry per series (1.8, 1.7 ...) showing its
+       newest version; the earlier versions fold out under "Earlier 1.8
+       versions" and under the series in the side list, each one opening
+       on a click.
+     - PDF engine upgraded from PDF.js 3.11.174 to 6.5.438. It no longer
+       contains the code behind CVE-2024-4367, decodes JPEG 2000 and
+       JBIG2 scanned images with faster local WebAssembly decoders, and
+       handles colour profiles. The Content Security Policy stays.
+     - Flipbook is now built with Python 3.13 (security support until
+       2029) instead of Python 3.10, whose support has ended.
+     - If this PC's WebView2 runtime is too old for the new PDF engine,
+       the Home screen says so and how to update it.
+
+  1.8.6  (2026-11-11)  Security fixes.
+     - A crafted PDF could run its own script in Flipbook through a known
+       flaw in PDF.js 3.11 (CVE-2024-4367). PDF.js now runs with
+       "isEvalSupported" off, and the page has a Content Security Policy:
+       no text-to-code and no connections except to Flipbook itself.
+     - The reader server now refuses requests addressed to any other name
+       than 127.0.0.1 or localhost on its port, and changes from any other
+       page origin. This blocks websites that use "DNS rebinding".
+     - Network paths (\\server\share\...) sent from the page are ignored,
+       so nothing can make Windows send your login to an outside server.
+       The Open dialog and drag-and-drop still accept them.
+
+  1.8.5  (2026-11-11)  The book icon on the Home screen too.
+     - The ornament before "FLIPBOOK" at the top of Home (a printer's
+       floral heart, which looked like a cherry) is replaced by the app
+       icon: the open book on a slate-blue tile, the same as in the title
+       bar and taskbar.
+
+  1.8.4  (2026-11-11)  A new, clearer app icon.
+     - The old icon blurred into a round blob at small sizes and looked
+       like a cherry. The new one is a bold open book with a page standing
+       up mid-turn, a gold cover edge and a red ribbon, on a slate-blue
+       tile.
+     - Each size (16 to 256 pixels) is drawn on its own. The smallest sizes
+       show a simpler, chunkier open book, so it still reads as a book in
+       the title bar and the taskbar.
+
+  1.8.3  (2026-11-11)  A shorter introduction.
+     - The introduction at the top of the manual shows only what is new in
+       the latest version, instead of a "New in" list for every version.
+       Earlier changes are here in the version history.
+
+  1.8.2  (2026-11-11)  About gets its own button; one version history.
+     - "ⓘ About" is its own button in the tools bar, right under
+       "⌨ Commands", instead of a button inside the Commands window.
+     - The version history is shown only in About's "Version history" tab.
+       It is no longer also a section of the manual or in its Contents.
+     - Fix: keys pressed while a window such as Commands, About or Add-ons
+       is open no longer turn the book's pages behind it. In About the keys
+       scroll the text, also right after clicking in the Contents.
+
+  1.8.1  (2026-11-11)  The manual lives only in the app.
+     - README.txt is no longer included next to Flipbook.exe. Everything it
+       held is in About, which is kept up to date.
+     - The release folder holds Flipbook.exe and "Flipbook - SHA-256
+       checksum.txt".
+
+  1.8.0  (2026-11-11)  The manual inside the app; checksum in its own file.
+     - New "About" button in ⌨ Commands. It opens this whole manual in a
+       window with the Contents down the side: click a section to glide to
+       it, and the section you are reading stays highlighted. Mentions of
+       "section N" in the text are links too.
+     - A "Version history" tab in About shows only the version history,
+       one card per version.
+     - The manual is built into Flipbook.exe, so the exe alone is enough.
+     - The SHA-256 checksum and size of Flipbook.exe moved out of this
+       manual into "Flipbook - SHA-256 checksum.txt", which explains what
+       it is and how to check it.
+
+  1.7.9  (2026-11-11)  True full screen; "one voice" wording.
+     - Full screen used to hide only the Windows title and taskbar. Now it
+       shows only the book: the top bar, Contents/Library, page slider,
+       tools bar, page-turn arrows and Read aloud bar are hidden. The
+       caption box stays if CC is on while reading.
+     - On entering, a note in the middle says "Full screen - Press Esc to
+       exit" (with a bookmark hint) for a few seconds.
+     - In full screen, clicking a page's ribbon spot opens the bookmark
+       colour palette right at the ribbon.
+     - The voice notes now say "at least one voice" instead of "at least
+       1 voice".
+
+  1.7.8  (2026-11-11)  Voice add-ons grouped, each with "Runs on".
+     - 🧩 Add-ons now has two groups: "Read aloud voices" (Natural AI
+       voice, Qwen3-TTS voices, Standard Windows voices) and "Word look-up"
+       (Dictionary).
+     - Every voice card ends with "Runs on", like the natural AI voice's:
+       Qwen3-TTS shows "Graphics card (GPU) only" with the card's name and
+       whether the voice is loaded; the Windows voices show "Processor
+       (CPU)".
+
+  1.7.7  (2026-11-11)  Full highlight, caption box, Windows voices removable.
+     - Highlight: each line of the highlight now has a margin of about a
+       third of the line's height, so the first and last letters and tall
+       capitals are fully covered. A closing quote printed apart from the
+       word ( require ? " ) now ends its own sentence instead of starting
+       the next one. Letter positions on PDFs with a text layer are measured
+       with the font's real letter widths. On scanned pages, letters the
+       text recognition is unsure of are still covered.
+     - Caption: CC text is in its own fixed-size box above the Read aloud
+       bar, no longer inside the bar, so the buttons stay put. The book is
+       fitted above the box. Long sentences get a smaller font (down to
+       12 px) instead of a bigger box. The status text in the bar has a
+       fixed width, so it no longer shifts the buttons.
+     - Voices: order is natural AI voice, Windows voices, Qwen3-TTS voices.
+       The Windows voices can be taken out of the voice menu (voice menu or
+       Add-ons) once another voice is installed. At least one voice is always
+       kept, with a note saying so.
+
+  1.7.6  (2026-11-11)  Qwen3-TTS voices show up right after installing.
+     - The voice menu was built only when Flipbook started, so Ryan and
+       Aiden appeared only after a restart. The menu is now rebuilt whenever
+       the Qwen voices are added or removed. While an install runs, Flipbook
+       keeps checking in the background, so the voices appear when it ends
+       even if the Add-ons window was closed. A note in the Read aloud bar
+       says so.
+
+  1.7.5  (2026-11-11)  The voice in use is highlighted in the Voice menu.
+     - In the open Voice menu (and other drop-down lists), the current
+       choice has a blue highlight with bold text: white on dark blue in
+       the dark theme, dark on light blue in the light theme. It is easy to
+       tell apart from the grey group title bars.
+
+  1.7.4  (2026-11-11)  Colour per bookmark, chosen in the Bookmark button.
+     - The separate "Ribbon colour" button (1.7.3) and the colour dots at
+       the top of the Bookmarks tab are gone. Clicking "Bookmark" now opens
+       a palette: on an unmarked page, a colour bookmarks the page in that
+       colour; on a marked page, a colour changes the bookmark's colour,
+       and "✕ Remove bookmark" removes it.
+     - Every bookmark keeps its own colour: its ribbon, its row in the list,
+       and the Bookmark button's icon show it. Older bookmarks keep the
+       colour they had.
+     - The Bookmarks tab groups bookmarks by colour, with a heading and a
+       count per colour. A colour dot on each row changes that bookmark's
+       colour.
+     - B, a ribbon click and "+ Bookmark page N" use the colour picked last.
+
+  1.7.3  (2026-11-11)  Ribbon colour button in the tools bar.
+     - The ribbon colours were only in the sidebar's Bookmarks tab, which
+       was hard to find. A "Ribbon colour" button under "🔖 Bookmark" in the
+       tools bar now opens a palette of the 8 colours. Its icon shows the
+       current colour. Esc or a click outside closes it. The sidebar dots
+       still work and stay in step with it.
+     - Listed in ⌨ Commands.
+
+  1.7.2  (2026-11-11)  Voice menu groups get title bars; no italics.
+     - Each group heading in the Voice menu is now a solid bar with bold
+       text (white on slate grey in the dark theme, near-black on pale
+       blue-grey in the light theme). It cannot be selected.
+     - The voice names are plain upright text again (1.7.1 had made them
+       italic).
+
+  1.7.1  (2026-11-11)  Readable Voice menu headings in the dark theme.
+     - The group headings in the Voice menu ("Natural AI voice (offline)",
+       "Standard Windows voices", "Add-on") had light text on a light
+       strip in the dark theme. They now use the dark list background with
+       light blue-grey italic text (dark blue-grey on white in the light
+       theme).
+
+  1.7.0  (2026-11-11)  Ribbon colours, clearer bookmarks, footnotes option.
+     - Bookmark ribbon colour: 8 mid-tone colours (Slate blue, Red, Orange,
+       Gold, Green, Teal, Purple, Rose) in the Bookmarks tab; remembered.
+     - Clear bookmark state: a faint outline with "+" when you point at an
+       unmarked page's ribbon, a solid ribbon that drops into place when
+       marked, a "Page N bookmarked" note, "✕" when pointing at a marked
+       ribbon, and a tooltip that says whether the page is bookmarked.
+     - Read aloud: "Footnotes: skipped / read" button (skipped by default).
+       Footnotes are recognised as smaller text at the bottom of the page
+       starting with a note mark; switching mid-reading continues from the
+       current sentence.
+
+  1.6.0  (2026-11-11)  A Home screen, and the Library as your collection.
+     - New Home screen at start, separate from the Library: "Continue
+       reading" with a picture of the page where you stopped, "Open a
+       PDF...", "Your library", and Add-ons at the bottom.
+     - The Library holds only your books: "← Back to book" at the top left,
+       the list on the left, and in the middle a large picture of the chosen
+       book's page (where you stopped, or page 1) with one button to open it.
+       Click a book to see it; double-click to open it.
+     - One "＋ Add PDFs to your library..." button replaces the separate
+       "Open a PDF" and "Add PDFs for later" in the Library.
+     - Add-ons moved out of the Library (Home and the tools bar).
+
+  1.5.1  (2026-11-11)  A calmer Library.
+     - "Your books" moved to a sidebar on the left, as a plain list (no boxes;
+       the ✕ to remove a book appears when you point at it). The middle shows
+       only the welcome, the "Continue reading" card and two buttons.
+     - Softer, rounded buttons and search box. Narrow windows show the list
+       below the welcome.
+
+  1.5.0  (2026-11-11)  Continue reading, and your book list.
+     - New: every start shows "Welcome back" with the last book read and a
+       "Continue reading at page N" button, next to "Open a PDF...".
+     - New: the Library lists every book you have read (page reached, when),
+       books added for later ("＋ Add PDFs for later...", several at once),
+       and the PDFs in Flipbook's folder. Open with one click; remove from
+       the list with ✕ (files, bookmarks and contents are kept); search
+       when the list is long; moved files are marked "File not found".
+     - "Open a PDF..." now uses Windows' Open dialog, and PDFs dragged into
+       the window are listed with their full location, so they can be
+       opened again later.
+
+  1.4.0  (2026-11-11)  The AI voice on the graphics card; Qwen3-TTS voices.
+     - New: the natural AI voice can run on the graphics card (any make,
+       2 GB+ video memory) with the optional "graphics-card speed-up"
+       (326 MB). Flipbook checks the card at every start, self-tests it
+       (same sound as the processor, clearly faster) and chooses
+       automatically; "Runs on" in Add-ons lets you choose Automatic,
+       Graphics card or Processor, and "Test again" repeats the test.
+       Measured on an RTX 3070 laptop: 4-6x faster than the processor.
+     - If the graphics card fails while reading, the sentence is made on the
+       processor, reading continues, the Read aloud bar says so, and
+       Automatic stays on the processor until you test again. The graphics
+       card works in a separate helper program, so it can't close Flipbook.
+     - When adding the AI voice on a PC with a suitable graphics card, a tick
+       box adds the speed-up too.
+     - New: Qwen3-TTS voices (Ryan, Aiden) as an optional add-on for NVIDIA
+       RTX 30-series or newer cards with 6 GB+ video memory (about 5.4 GB
+       download, 7.4 GB on disk); offered only where the card can run them,
+       otherwise Add-ons explains why not.
+
+  1.3.0  (2026-11-10)  Tools bar, Add-ons manager and Commands list.
+     - New: a collapsible tools bar on the right holds Go to page, Look up
+       words, Read aloud, Bookmark, Light/Dark and Full screen, each with
+       its key. It collapses to icons only; the choice is remembered. The
+       top bar keeps only Contents and Library.
+     - New: 🧩 Add-ons manager in the tools bar. It lists the natural AI
+       voice and the Dictionary with their state (added / not added /
+       downloading) and size, and an Add or Remove button for each.
+     - New: ⌨ Commands list (tools bar, or the ? key) with every key and
+       mouse action.
+     - New: G key to go to a page.
+     - New: a one-time tip on first use points to the tools bar.
+     - The book title is centred in the top bar, with the chapter under it.
+     - One-page view is now chosen by the space left for the book, so with
+       both sidebars open the page is shown larger instead of two tiny
+       pages.
+
+  1.2.0  (2026-11-10)  Word look-up, and a smoother Read aloud.
+     - New: word look-up. Right-click a word, or use Look-up mode (🔍 / D),
+       to see meanings, etymology, similar words and pronunciation. Handles
+       word forms and suggests corrections for misread words. Optional
+       Dictionary add-on (about 40 MB download, built on your PC from
+       Webster's 1913 and Open English WordNet). Add-ons... list in the
+       Library.
+     - Read aloud keeps your place: turning away pauses reading with a
+       "↩ p. N" button; turning back continues the same sentence instead of
+       starting over. Optional "Follow my page turns" (⤳). The last sentence
+       read in each book is remembered.
+     - Read from here: click any sentence while Read aloud is open.
+     - Much less "Preparing the voice...": outdated requests are dropped, the
+       sentence about to be spoken goes first, already-read sentences replay
+       instantly, long sentences start sooner, rapid ⏭/⏮ clicks and page
+       turns only prepare where you land, and scanned pages are recognised
+       ahead.
+     - Speed changes apply immediately to the AI voice.
+     - Fix: word endings were clipped by the AI voice's silence trimming
+       ("effect" sounded like "effet"); fast speeds blurred consonants.
+     - New: caption (CC) showing the text being read; pronunciation fixes
+       (Aa) with built-in fixes for old spellings and ligatures.
+     - Fix: running heads such as "10 A GUIDE TO ..." were sometimes read.
+     - Fix: pressing ▶ during a page turn could start on the wrong page.
+     - Fix: after reopening a book, AI speech requests could be refused.
+
+  1.1.0  (2026-11-10)  Read aloud.
+     - Read aloud with sentence highlighting and automatic page turns, for
+       text-layer PDFs and (via OCR) scanned books.
+     - Reading speed 0.5x - 2.0x with words-per-minute readout.
+     - Optional natural AI voice add-on (Kokoro, 12 English voices) with size
+       notice, progress, cancel/resume and checksum check; removable.
+     - Standard Windows voices with no download.
+     - Keys R, [ and ]. Version number on the Library screen.
+     - The local server refuses changes that don't come from Flipbook.
+     - Fix: with two Flipbook windows open, the second one could talk to the
+       first one's library.
+
+  1.0.0  (2026-11-10)  First release.
+     - Standalone Windows app in a single Flipbook.exe; works offline.
+     - Two-page book view with 3D page-turn animation, drag-to-turn,
+       mouse-wheel and keyboard turning; one-page view in narrow windows.
+     - Library of PDFs in the app folder; open any PDF by file picker,
+       drag-and-drop, or "Open with".
+     - Automatic table of contents from the PDF outline plus detected
+       chapter headings, with OCR for scanned books; searchable.
+     - Bookmarks with ribbon markers, rename and delete.
+     - Remembers last page per book.
+     - Light and dark themes; full-screen reading; page close-up view.
+
+================================================================================

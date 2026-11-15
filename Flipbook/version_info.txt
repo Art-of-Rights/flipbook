@@ -1,0 +1,27 @@
+# UTF-8
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(1, 8, 20, 0),
+    prodvers=(1, 8, 20, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable(
+        u'040904B0',
+        [StringStruct(u'CompanyName', u'Flipbook'),
+         StringStruct(u'FileDescription', u'Flipbook PDF Reader'),
+         StringStruct(u'FileVersion', u'1.8.20'),
+         StringStruct(u'InternalName', u'Flipbook'),
+         StringStruct(u'OriginalFilename', u'Flipbook.exe'),
+         StringStruct(u'ProductName', u'Flipbook'),
+         StringStruct(u'ProductVersion', u'1.8.20')])
+    ]),
+    VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
+  ]
+)

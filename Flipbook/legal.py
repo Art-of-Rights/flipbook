@@ -1192,6 +1192,18 @@ class _Cancelled(Exception):
     pass
 
 
+CERT_TRIES = 20          # quick retries when a download server's security certificate fails (see _fetch)
+
+
+def _cert_error(e):
+    """True for 'certificate verify failed' (e.g. an expired certificate), also when urllib wraps it."""
+    import ssl
+    for x in (e, getattr(e, "reason", None), getattr(e, "__cause__", None), getattr(e, "__context__", None)):
+        if isinstance(x, ssl.SSLCertVerificationError):
+            return True
+    return "CERTIFICATE_VERIFY_FAILED" in str(e)
+
+
 _running = {}            # base -> Installer whose thread is busy
 _running_lock = threading.Lock()
 
@@ -1202,7 +1214,7 @@ class Installer:
         self.lock = threading.Lock()
         self.thread = None
         self.cancel_flag = False
-        self._st = {"state": "idle", "source": None, "pct": 0, "message": "", "error": None}
+        self._st = {"state": "idle", "source": None, "pct": 0, "message": "", "error": None, "note": None}
 
     def status(self):
         return dict(self._st)
@@ -1249,7 +1261,7 @@ class Installer:
     def start_download(self):
         if self.busy():
             return self.status()
-        self._set(state="downloading", source="blacks2", pct=0, message="Starting the download", error=None)
+        self._set(state="downloading", source="blacks2", pct=0, message="Starting the download", error=None, note=None)
         self._launch(self._run_download)
         return self.status()
 
@@ -1294,7 +1306,7 @@ class Installer:
                 for chunk in iter(lambda: fp.read(1 << 20), b""):
                     h.update(chunk)
         mb = s["size"] / 1e6
-        tries = 0
+        tries = cert_tries = 0
         while have < s["size"]:
             self._check()
             self._set(state="downloading", pct=70 * have / s["size"],
@@ -1322,9 +1334,25 @@ class Installer:
                         if have >= s["size"]:
                             break
                 tries = 0
+                self._set(note=None)
             except _Cancelled:
                 raise
             except Exception as e:
+                if _cert_error(e):
+                    # (1.8.22) archive.org sends each request to one of its many servers; some have had expired
+                    # security certificates (2026-11-15). Never skip the check: ask again, another server may answer.
+                    cert_tries += 1
+                    if cert_tries > CERT_TRIES:
+                        self._set(note=None)
+                        raise RuntimeError("archive.org's download servers have an expired security certificate right "
+                                           "now, so Flipbook can't download safely. This is on archive.org's side; "
+                                           "please try again later (it continues where it left off).")
+                    self._set(note=f"archive.org's server has an expired security certificate. "
+                                   f"Trying another of its servers ({cert_tries} of {CERT_TRIES})…")
+                    for _ in range(4):
+                        self._check()
+                        time.sleep(0.5)
+                    continue
                 if getattr(e, "code", None) == 416:
                     try:
                         os.remove(part)

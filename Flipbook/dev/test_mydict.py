@@ -486,6 +486,103 @@ def synthetic(work):
           mydict.suggest_title(py))
     check("guess_kind: law title -> legal", mydict.guess_kind([py], "A Concise Law Dictionary") == "legal")
     check("guess_kind: made-up words -> general", mydict.guess_kind([p1], "The Zorbish Lexicon") == "general")
+    out.update(kind_tests(d))
+    return out
+
+
+# ---------------------------------------------------------------- legal or general: kind_evidence, content_kind
+LAWISH = ["court", "statute", "plaintiff", "defendant", "judgment", "contract", "lien", "equity", "lessee", "tenant",
+          "estate", "deed", "party", "action", "law", "legal", "jurisdiction", "decree", "heirs", "conveyance"]
+
+
+def law_entries(seed, law_share):
+    """A made-up glossary whose headwords are common legal terms (mydict.LEGAL_TERMS) and whose definitions
+    use legal words at about law_share of the words."""
+    rng = random.Random(seed)
+    vocab = _words(rng, 400, "fhjlmnwz", "aeiouy", (2, 2))
+    heads = sorted({t[:1].upper() + t[1:] for t in mydict.LEGAL_TERMS}, key=legal._key)
+    out = []
+    for h in heads:
+        sents = []
+        for _ in range(rng.randint(1, 3)):
+            ws = []
+            for _ in range(rng.randint(8, 20)):
+                r = rng.random()
+                ws.append(rng.choice(LAWISH) if r < law_share else rng.choice(FUNC) if r < law_share + 0.35
+                          else rng.choice(vocab))
+            ws[0] = ws[0][:1].upper() + ws[0][1:]
+            sents.append(" ".join(ws) + ".")
+        out.append((h, " ".join(sents)))
+    return out
+
+
+def kind_tests(d):
+    out = {}
+    ev = mydict.kind_evidence
+    # a law glossary with a plain file name: the words on its pages say legal
+    pages, _ = layout_two_col(law_entries(91, 0.25), seed=91)
+    pl = os.path.join(d, "glossary one.pdf")
+    write_pdf(pl, pages)
+    t0 = time.time()
+    r = ev(pl)
+    check("kind_evidence: law words on the pages -> legal", r["kind"] == "legal" and "pages" in r["why"],
+          f"{r} in {time.time() - t0:.1f}s")
+    check("guess_kind follows kind_evidence (legal)", mydict.guess_kind(pl) == "legal")
+    # made-up words with a plain name: general from the pages; with a word-origins name: general from both
+    pages, _ = layout_two_col(make_entries(92, 500), seed=92)
+    pg = os.path.join(d, "zorbish words.pdf")
+    write_pdf(pg, pages)
+    r = ev(pg)
+    check("kind_evidence: no law words on the pages -> general", r["kind"] == "general" and "pages" in r["why"], r)
+    pw = os.path.join(d, "zorbish word origins.pdf")
+    write_pdf(pw, pages)
+    r = ev(pw)
+    check("kind_evidence: word-origins name + plain pages -> general (title and pages)",
+          r["kind"] == "general" and "title" in r["why"] and "pages" in r["why"], r)
+    # the name says law, the pages don't: unsure
+    pc = os.path.join(d, "zorbish law terms.pdf")
+    write_pdf(pc, pages)
+    r = ev(pc)
+    check("kind_evidence: law name but ordinary pages -> None", r["kind"] is None, r)
+    # some law words, neither clearly: unsure
+    mid = (mydict.PAGE_LEGAL_RATE * mydict.PAGE_GENERAL_RATE) ** 0.5
+    pages, _ = layout_two_col(law_entries(93, mid), seed=93)
+    pm = os.path.join(d, "zorbish notes.pdf")
+    write_pdf(pm, pages)
+    sig = mydict._kind_signals(pm)
+    r = ev(pm)
+    check("kind_evidence: a few law words, plain name -> None", r["kind"] is None, f"{r}, rate {sig['rate']}")
+    # a title page naming a law dictionary decides even with a plain file name
+    tp = Page()
+    tp.text(150, 600, [("F4", "BLACK'S LAW DICTIONARY")], 20)
+    pages, _ = layout_two_col(make_entries(94, 300), seed=94)
+    pb = os.path.join(d, "volume one.pdf")
+    write_pdf(pb, [tp] + pages)
+    r = ev(pb)
+    check("kind_evidence: Black's title page -> legal, whatever the pages", r == {"kind": "legal", "why": "its title page"}, r)
+    check("kind_evidence: no files -> None", ev([os.path.join(d, "nothing.pdf")])["kind"] is None)
+    # content_kind on the headwords a build found
+    ck = mydict.content_kind
+    legal_heads = [t.title() for t in mydict.LEGAL_TERMS] + [h for h, t in make_entries(95, 300)]
+    r = ck(legal_heads)
+    check("content_kind: law terms -> legal", r["kind"] == "legal" and r["legal_hits"] >= 0.9 * len(mydict.LEGAL_TERMS)
+          and r["checked"] == len(legal_heads) and r["score"] > 0, r)
+    small = [t for t in mydict.LEGAL_TERMS if " " in t][:60] + [h for h, t in make_entries(96, 200)]
+    r = ck(small)
+    check("content_kind: a small glossary of law phrases -> legal (not general)", r["kind"] == "legal", r)
+    gen_heads = [w.capitalize() for w in mydict.EVERYDAY_WORDS] + [h for h, t in make_entries(97, 2000)] + \
+        [t for t in mydict.LEGAL_TERMS if " " not in t][:15]
+    r = ck(gen_heads)
+    check("content_kind: everyday words (and a few law words) -> general", r["kind"] == "general" and r["score"] < 0, r)
+    r = ck([h for h, t in make_entries(98, 800)])
+    check("content_kind: made-up words only -> None", r["kind"] is None, r)
+    r = ck(list(mydict.LEGAL_TERMS[:20]))
+    check("content_kind: too few headwords -> None", r["kind"] is None, r)
+    mix = [t.title() for t in mydict.LEGAL_TERMS[::20]] + [w.capitalize() for w in mydict.EVERYDAY_WORDS[::40]] + \
+        [h for h, t in make_entries(99, 1000)]
+    r = ck(mix)
+    check("content_kind: a few of each (a mixed book) -> None", r["kind"] is None, r)
+    out["pl"] = pl
     return out
 
 
@@ -521,6 +618,9 @@ def installer_tests(work, s):
     check("info: entries, files, pages, bytes",
           all(d["entries"] > 300 and d["files"] == 1 and d["pages"] > 5 for d in i["dicts"]) and i["bytes"] > 0, i)
     check("installed(kind)", mydict.installed(base) and mydict.installed(base, "legal") and mydict.installed(base, "general"))
+    check("info: every dictionary has content_kind (made-up words: None)",
+          all("content_kind" in d and d["content_kind"] is None for d in i["dicts"]), [d.get("content_kind") for d in i["dicts"]])
+    check("status: content_kind None for made-up words", "content_kind" in st and st["content_kind"] is None, st)
     # look-ups
     h1, t1 = s["e1"][100]
     r = mydict.lookup(base, h1.lower())
@@ -628,6 +728,26 @@ def installer_tests(work, s):
     check("ids start again at u1 once everything was removed", [d["id"] for d in mydict.info(base)["dicts"]] == ["u1", "u2"])
     mydict.remove(base)
     check("remove(None): everything gone", not os.path.exists(mydict.addon_dir(base)))
+    # a law glossary added as a general dictionary: the build says what its headwords are
+    inst = mydict.Installer(base)
+    inst.start_import([s["pl"]], "Glossary", "general")
+    st = wait(inst)
+    check("law glossary built: status content_kind 'legal'", st["state"] == "done" and st["content_kind"] == "legal", st)
+    i = mydict.info(base)
+    check("law glossary: info content_kind 'legal' (kind stays general)",
+          [(d["kind"], d["content_kind"]) for d in i["dicts"]] == [("general", "legal")], i["dicts"])
+    import sqlite3
+    con = sqlite3.connect(mydict.db_path(base))
+    try:
+        o = json.loads(con.execute("SELECT origin FROM sources").fetchone()[0])
+    finally:
+        con.close()
+    check("law glossary: origin JSON has content {kind, score}",
+          o.get("content", {}).get("kind") == "legal" and isinstance(o["content"].get("score"), float), o.get("content"))
+    st2 = inst.start_import([s["nd"]], "essay", "general")
+    check("a new build resets content_kind", st2["content_kind"] is None, st2)
+    wait(inst)
+    mydict.remove(base)
     mydict.unload()
 
 

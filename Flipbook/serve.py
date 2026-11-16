@@ -28,7 +28,7 @@ else:
 DATA = os.path.join(HERE, "flipbook-data")   # saved contents + bookmarks, one JSON per book
 PORT = 8765
 LAUNCHED = []   # absolute paths of PDFs given on the command line
-VERSION = "1.8.20"
+VERSION = "1.8.23"
 
 try:
     import tts                     # natural AI voice (engine bundled; voice files are an add-on)
@@ -188,6 +188,13 @@ def legal_import(paths):
     jobs = legal_jobs(paths)
     if not jobs:
         return {"error": "These PDFs don't look like Black's Law Dictionary, 4th or 5th edition."}
+    return _start_legal_jobs(jobs)
+
+
+def _start_legal_jobs(jobs):
+    """Build Black's 4th/5th with legal.py's own reader: the first edition now, the others one after the other."""
+    if legal_installer().busy() or _legal_queue:
+        return {"error": "A legal dictionary is being built already. Wait for it to finish, or cancel it."}
     legal_installer().start_import(jobs[0][1], jobs[0][0])
     _legal_queue[:] = [e for e, f in jobs[1:]]
     if len(jobs) > 1:
@@ -220,30 +227,81 @@ def mydict_prepare(paths):
     global _mydict_pending
     if not mydict:
         return {"error": "Adding your own dictionaries is not available in this copy of Flipbook."}
+    paths = [p for p in paths if not is_network_path(p)]
     files = []
     for p in paths:
-        if is_network_path(p):
-            continue
         if os.path.isdir(p):
             found = [os.path.join(p, n) for n in sorted(os.listdir(p), key=_natural_key)
                      if n.lower().endswith(".pdf") and os.path.isfile(os.path.join(p, n))]
         else:
             found = [p] if p.lower().endswith(".pdf") and os.path.isfile(p) else []
         files += [f for f in found if f not in files and not is_network_path(f)]
-    if not files:
+    # v1.8.21: one "Add" button for every law dictionary. Black's 4th/5th (also a folder holding both editions'
+    # folders) are still recognised from their title pages and built by legal.py's own, better reader.
+    jobs = _blacks_jobs(paths, files) if legal else []
+    if not files and len(jobs) == 1:
+        files = list(jobs[0][1])
+    if not files and not jobs:
         return {"error": "No PDF files were found there."}
-    try:
-        chk = mydict.check_pdfs(files)
-    except Exception as e:
-        return {"error": f"Flipbook couldn't open that PDF ({e})."}
-    if not chk.get("text"):
-        return {"error": "This PDF has no text in it (a scan without OCR), so Flipbook can't read its words. "
-                         "A PDF that has been through text recognition (OCR) works."}
-    title = mydict.suggest_title(files)
+    if jobs:
+        chk = {"pages": 0, "text": True}
+        try:
+            chk["pages"] = sum(len(mydict._open(f).pages) for e, fl in jobs for f in fl)
+        except Exception:
+            pass
+    else:
+        try:
+            chk = mydict.check_pdfs(files)
+        except Exception as e:
+            return {"error": f"Flipbook couldn't open that PDF ({e})."}
+        if not chk.get("text"):
+            return {"error": "This PDF has no text in it (a scan without OCR), so Flipbook can't read its words. "
+                             "A PDF that has been through text recognition (OCR) works."}
+    eds = [e for e, f in jobs]
+    if eds:
+        title = " and ".join(legal.SOURCES[e]["title"] for e in eds)
+        ev = {"kind": "legal", "why": "its title page"}
+    else:
+        title = mydict.suggest_title(files)
+        try:
+            ev = mydict.kind_evidence(files, title) if hasattr(mydict, "kind_evidence") else {"kind": None, "why": ""}
+        except Exception:
+            ev = {"kind": None, "why": ""}
     token = hashlib.sha256(os.urandom(32)).hexdigest()[:24]
-    _mydict_pending = {"token": token, "files": files}
-    return {"token": token, "count": len(files), "names": [os.path.basename(f) for f in files[:8]],
-            "pages": chk.get("pages", 0), "title": title, "kind": mydict.guess_kind(files, title)}
+    _mydict_pending = {"token": token, "files": files, "jobs": jobs}
+    shown = files or [f for e, fl in jobs for f in fl]
+    return {"token": token, "count": len(shown), "names": [os.path.basename(f) for f in shown[:8]],
+            "pages": chk.get("pages", 0), "title": title,
+            "kind": "legal" if eds else (ev.get("kind") or "general"),
+            "evidence": ev.get("kind"), "why": ev.get("why", ""), "blacks": eds,
+            "general_ok": bool(files)}
+
+
+BLACKS_MIN_PAGES = 400      # a whole Black's edition has well over 1,000 pages; an excerpt or a book about Black's is read as any other
+
+
+def _blacks_jobs(paths, files):
+    """[(edition, files)] when the choice is a whole Black's Law 4th/5th edition: one folder, a folder holding both
+    editions' folders, or several PDF files chosen together (one edition split into files)."""
+    try:
+        if paths and all(os.path.isfile(p) for p in paths):
+            ed = legal.detect_edition(files) if files else None
+            jobs = [(ed, files)] if ed and _looks_blacks(os.path.dirname(files[0]), files) else []
+        else:
+            jobs = legal_jobs(paths)
+        out = []
+        for ed, fl in jobs:
+            pages = 0
+            for f in fl:
+                try:
+                    pages += len(mydict._open(f).pages)
+                except Exception:
+                    pass
+            if pages >= BLACKS_MIN_PAGES:
+                out.append((ed, fl))
+        return out
+    except Exception:
+        return []
 
 
 def _natural_key(s):
@@ -702,6 +760,16 @@ class Handler(SimpleHTTPRequestHandler):
                         return self.send_bytes(b'{"error":"Choose the PDF files again."}', code=400)
                     if kind not in mydict.KINDS or not title:
                         return self.send_bytes(b'{"error":"bad name or kind"}', code=400)
+                    if kind == "legal" and pend.get("jobs"):
+                        # Black's 4th/5th as a legal dictionary: legal.py's own reader (addons\legal)
+                        r = _start_legal_jobs(pend["jobs"])
+                        if r.get("error"):
+                            return self.send_bytes(json.dumps(r).encode("utf-8"), code=409)
+                        globals()["_mydict_pending"] = None
+                        return self.send_bytes(json.dumps(dict(mydict_status(), legal=r)).encode("utf-8"))
+                    if not pend["files"]:
+                        return self.send_bytes(json.dumps({"error": "That folder holds more than one edition. To add one "
+                                                           "as an etymology dictionary, choose that edition's own folder."}).encode("utf-8"), code=409)
                     globals()["_mydict_pending"] = None
                     inst.start_import(pend["files"], title, kind)
                 elif path == "/api/mydict/cancel":

@@ -15,8 +15,9 @@ page-flip animation. It runs entirely on your computer and works offline. Nothin
 - **Legal dictionary**: a switch between Etymology and ⚖ Legal. Black's Law Dictionary, 2nd edition
   (1910, public domain) is a free download; if you own the 4th or 5th edition as PDFs, Flipbook can
   read them on your PC.
-- **Your own dictionaries**: add any dictionary you have as a PDF, legal or general. Flipbook works out
-  how its entries are laid out by itself.
+- **Your own dictionaries**: add any dictionary you have as a PDF to the Etymology or the Legal
+  dictionary. Flipbook works out how its entries are laid out by itself, and warns you if a dictionary
+  looks like the other kind.
 - **Text recognition (OCR)** for scanned books, light and dark themes, full screen, keyboard shortcuts.
 
 The full user manual is inside the app: click **ⓘ About** in the tools bar.
@@ -40,7 +41,7 @@ Python needed. Put it in any folder you can write to (for example Documents\Flip
 
 ## Add-ons and your own books
 
-Optional add-ons (the AI voice, the Dictionary, Black's 2nd edition) are downloaded from their original
+Optional add-ons (the AI voice, Webster's 1913 and WordNet, Black's 2nd edition) are downloaded from their original
 sources and checked against fixed checksums. Dictionaries you add from your own PDFs are built on your
 PC and never leave it. **No dictionary text and no books are included in this repository**: the Black's
 4th and 5th editions, and any dictionary you add, are copyrighted works that each user must own.

@@ -76,7 +76,8 @@ class Api:
         return [{"id": b["id"], "name": b["name"], "size": b.get("size", 0)} for b in serve.books_add(list(paths))]
 
     def mydict_pick(self, kind="files"):
-        """Add-ons > "Add a dictionary (PDF)…" (v1.8.18): Windows' file dialog (one or more PDFs, e.g. the
+        """Add-ons > Etymology dictionary > "Add a dictionary…" and Legal dictionary > "Add another law
+        dictionary…" (v1.8.18; v1.8.21 also recognises Black's 4th/5th, see serve.mydict_prepare): Windows' file dialog (one or more PDFs, e.g. the
         volumes of one dictionary) or folder dialog (one PDF per letter). The chosen files are checked and
         kept on the Python side under a one-time token; the page gets the token, a suggested name and kind,
         and sends back only the token with the name and kind the user chose."""
@@ -100,7 +101,8 @@ class Api:
             return {"error": str(e)}
 
     def legal_import(self, kind="folder"):
-        """Add-ons > Legal dictionary > "Add your Black's PDFs…" (v1.8.17): Windows' folder dialog (or a
+        """No longer used by the page since 1.8.21 (Black's goes through mydict_pick); kept for old pages and
+        tests. (v1.8.17) Windows' folder dialog (or a
         file dialog for PDFs), then build that edition into addons\\legal on this PC. The path never
         comes from the page. Returns the legal status, {"cancelled": True}, or {"error": ...}."""
         import webview

@@ -1,6 +1,6 @@
 ================================================================================
   FLIPBOOK PDF READER
-  Version 1.8.20  -  Released 2026-11-15
+  Version 1.8.23  -  Released 2026-11-15
 ================================================================================
 
 Flipbook reads any PDF like a real book: two pages side by side, turned with a
@@ -11,13 +11,17 @@ up the meaning and origin of any word you click.
 
 It runs entirely on your computer and works offline. Nothing is uploaded.
 
-New in 1.8.20:
-  - New, everyday examples in this manual and in the pronunciation fixes
-    window (for example "candidate", "travelled", "Worcestershire"), and
-    neutral sentences for the graphics-card voice test. Nothing else
-    changed.
-  - 1.8.18 added dictionaries of your own from PDF files: "🧩 Add-ons" >
-    "Your own dictionaries" (section 10).
+New in 1.8.23:
+  - Contents pages: a page number that text recognition misread as letters
+    (such as "il" for 1) no longer sends you to the next entry's page.
+    Flipbook works out the number and goes to the page with that title
+    (section 5, "Page links").
+  - 1.8.22: the free Black's 2nd edition download keeps trying when one of
+    archive.org's servers has an expired security certificate, with a small
+    note in the download window (section 10).
+  - 1.8.21 regrouped the dictionaries in "🧩 Add-ons" into two boxes,
+    "Etymology dictionary" and "Legal dictionary", and added a warning when
+    a dictionary looks like the wrong kind for its box (section 10).
 
 For every earlier version, see "ⓘ About" > "Version history".
 
@@ -34,7 +38,7 @@ For every earlier version, see "ⓘ About" > "Version history".
   7. Bookmarks
   8. Read aloud
   9. The natural AI voice, the graphics card and Qwen3-TTS (optional add-ons)
- 10. Word look-up and the Dictionary (optional add-on)
+ 10. Word look-up and the dictionaries (optional add-ons)
  11. Pronunciation fixes
  12. Light and dark themes
  13. Keyboard and mouse controls
@@ -65,10 +69,11 @@ For every earlier version, see "ⓘ About" > "Version history".
                        its graphics-card speed-up (about 326 MB) if added.
   addons\qwen\         The Qwen3-TTS voices - only if you download them
                        (about 7.4 GB, section 9).
-  addons\dictionary\   The Dictionary - only if you download it
-                       (about 46 MB once built, section 10).
-  addons\legal\        The Legal dictionary (Black's Law) - only if you
-                       add it (section 10).
+  addons\dictionary\   The free etymology dictionary (Webster's 1913 and
+                       WordNet) - only if you download it (about 46 MB
+                       once built, section 10).
+  addons\legal\        Black's Law Dictionary (the free 2nd edition and
+                       your own 4th / 5th) - only if you add it (section 10).
   addons\mydicts\      Dictionaries you added from your own PDFs - only
                        if you add one (section 10).
 
@@ -91,8 +96,8 @@ For every earlier version, see "ⓘ About" > "Version history".
   - No Python or other software is needed. An internet connection is only
     needed once per add-on, if you choose to download one.
   - Disk: about 66 MB for the app, plus your PDFs, plus 206 MB for the AI
-    voice (+326 MB for its graphics-card speed-up), 46 MB for the Dictionary
-    and about 7.4 GB for the Qwen3-TTS voices, if you add them.
+    voice (+326 MB for its graphics-card speed-up), 46 MB for the free
+    etymology dictionary and about 7.4 GB for the Qwen3-TTS voices, if you add them.
   - Graphics card (optional): any graphics card with at least 2 GB of its
     own video memory can speed up the AI voice. The Qwen3-TTS voices need an
     NVIDIA graphics card with about 6 GB of video memory or more.
@@ -120,7 +125,7 @@ For every earlier version, see "ⓘ About" > "Version history".
   5. When a book is open, the tools are in the bar on the right side. The
      first time, a short tip points this out. Click "⌨ Commands" at the
      bottom of that bar (or press ?) to see every key and mouse action, and
-     "🧩 Add-ons" to add the natural AI voice or the Dictionary.
+     "🧩 Add-ons" to add the natural AI voice or the dictionaries.
   6. To read this manual inside Flipbook, click "ⓘ About" in the tools
      bar, just under "⌨ Commands". Click a line of its Contents to jump to
      that section. Its "Version history" tab lists what changed in each
@@ -153,7 +158,7 @@ For every earlier version, see "ⓘ About" > "Version history".
     to open it right there.
   - "📂 Open a PDF..." to open a different book, and "📚 Your library" to
     see all your books.
-  - At the bottom: "🧩 Add-ons" (the optional AI voices and Dictionary) and
+  - At the bottom: "🧩 Add-ons" (the optional AI voices and dictionaries) and
     the version number.
   (Starting Flipbook by opening a PDF - "Open with", or dragging a PDF onto
   Flipbook.exe - opens that PDF directly instead.)
@@ -226,8 +231,8 @@ For every earlier version, see "ⓘ About" > "Version history".
     Page  Go      Go to a page (in icons-only view: #, which asks for the
                   page number)
     🔍 Look up words   Look-up mode on / off (D)       - section 10
-      Etymology | ⚖ Legal  Which dictionary Look-up uses: the general one
-                       or Black's Law Dictionary          - section 10
+      Etymology | ⚖ Legal  Which dictionary Look-up uses: the etymology
+                       dictionaries or the legal ones     - section 10
     🔗 Page links      Follow links and contents lines on / off (L)
                        - "Page links" below
     🔊 Read aloud      Show / hide the Read aloud bar (R) - section 8
@@ -263,6 +268,11 @@ For every earlier version, see "ⓘ About" > "Version history".
     A title that runs onto a second line is one link. A heading with no
     page number of its own ("Chapter IV", "PART TWO") goes to the page of
     the first entry under it.
+  - A page number that text recognition misread as letters (for example
+    "il" for 1) is worked out from the numbers it could be, between the
+    entries above and below it, and Flipbook goes to the page that shows
+    the entry's title. If it can't be sure, it says so and stays put; it
+    never sends you to the next entry's page.
   - Scanned books: their contents pages are read with text recognition.
     Flipbook does this only for the first pages of a book and the pages
     under a "Contents" entry, a second or two after you turn to them.
@@ -509,8 +519,9 @@ For every earlier version, see "ⓘ About" > "Version history".
                            runs on the graphics card only and says whether
                            it is loaded; the Windows voices run on the
                            processor.
-       WORD LOOK-UP        the Dictionary and the Legal dictionary (Black's
-                           Law).
+       WORD LOOK-UP        the Etymology dictionary and the Legal
+                           dictionary, each with its free download and
+                           your own dictionaries (section 10).
   3. A notice explains the download:
        - Download: about 206 MB, one time, needs internet.
        - Adds about 206 MB of disk space, in the addons\voice folder next to
@@ -633,7 +644,7 @@ For every earlier version, see "ⓘ About" > "Version history".
 
 
 --------------------------------------------------------------------------------
- 10. WORD LOOK-UP AND THE DICTIONARY (OPTIONAL ADD-ON)
+ 10. WORD LOOK-UP AND THE DICTIONARIES (OPTIONAL ADD-ONS)
 --------------------------------------------------------------------------------
   Find out what a word means and where it comes from.
 
@@ -663,10 +674,24 @@ For every earlier version, see "ⓘ About" > "Version history".
   - "More on Wiktionary ↗" opens the word on Wiktionary in your web browser.
     Only this link uses the internet, and only when you click it.
 
-  Getting the Dictionary
-  - Click "🧩 Add-ons" in the tools bar and press "Add..." next to
-    "Dictionary". (The first time you look up a word, the card also offers
-    it, and so does "🧩 Add-ons" at the bottom of Home.) A notice explains it:
+  The two dictionary boxes in Add-ons
+  - "🧩 Add-ons" (tools bar, or the bottom of Home) has two boxes under
+    "🔍 Word look-up". Each holds a free download AND the dictionaries you
+    add from your own PDFs of that kind:
+       Etymology dictionary   the free Webster's 1913 and WordNet, and your
+                              own etymology or general dictionaries.
+                              "Add a dictionary..." adds one of yours.
+       Legal dictionary       the free Black's Law Dictionary, 2nd edition,
+                              and your own law dictionaries (Black's 4th or
+                              5th edition, or any other). "Add or change..."
+                              opens the Legal dictionaries window.
+    Your own dictionaries are listed inside their box, each with "Rename",
+    "Move to ⚖ Legal" (or "Move to Etymology") and "Remove".
+
+  Getting the free etymology dictionary (Webster's 1913 and WordNet)
+  - "🧩 Add-ons" > "Etymology dictionary" > "Download..." next to
+    "Webster's 1913 and WordNet". (The first time you look up a word, the
+    card also offers it.) A notice explains it:
        - Download: about 40 MB, one time, needs internet, from Project
          Gutenberg and the Open English WordNet project.
        - Flipbook then builds the dictionary on your PC (about half a minute)
@@ -679,8 +704,9 @@ For every earlier version, see "ⓘ About" > "Version history".
   - When it is ready, Look-up mode switches on.
 
   Removing it
-  - "🧩 Add-ons" (tools bar, or the bottom of Home) > "Remove..."
-    next to "Dictionary", then confirm.
+  - "🧩 Add-ons" > "Etymology dictionary" > "Remove..." next to
+    "Webster's 1913 and WordNet", then confirm. Your own etymology
+    dictionaries stay.
 
   Computers without internet
   - Build it on another PC, then copy the whole "addons\dictionary" folder
@@ -710,26 +736,32 @@ For every earlier version, see "ⓘ About" > "Version history".
     word's everyday meaning.
 
   Getting the Legal dictionary
-  - "🧩 Add-ons" > "Legal dictionary (Black's Law)" > "Add..." (or set the
-    switch to ⚖ Legal and right-click a word: the card offers it). The
-    window has two steps:
+  - "🧩 Add-ons" > "Legal dictionary": "Download..." next to Black's 2nd
+    edition gets the free one, and "Add..." / "Add or change..." opens the
+    Legal dictionaries window (setting the switch to ⚖ Legal and
+    right-clicking a word offers it too). The window has two steps:
     1. The free ones. "Get the free ones" downloads, one time:
        - Black's Law Dictionary, 2nd edition (1910), public domain, about
          7 MB from archive.org, and
-       - the general Dictionary (about 40 MB), if it isn't added yet. It
-         answers when a word has no legal meaning, and adds word origins.
+       - the free etymology dictionary (Webster's 1913 and WordNet, about
+         40 MB), if it isn't added yet. It answers when a word has no legal
+         meaning, and adds word origins.
        One progress window shows both.
-    2. Your own copies (optional):
-       - "Add your Black's PDFs (folder)...": choose the folder holding one
-         edition's PDF files, for example your 4th or 5th edition, or a
-         folder that holds both editions' folders: then both are added,
-         one after the other. Flipbook recognises the edition from its
-         title page (or the folder's name), reads the PDFs once and builds
-         the dictionary in the addons\legal folder next to Flipbook.exe.
-         It takes a few minutes for a whole edition.
-       - "Add another law dictionary...": any other law dictionary in PDF,
-         such as Bouvier, Ballentine or Osborn (see "A dictionary of your
-         own" below).
+       If one of archive.org's servers has an expired security
+       certificate, Flipbook tries another (up to 20 times) and a small
+       note in the window says so. It never skips the security check; if
+       none answers safely, try again later.
+    2. Your own law dictionaries (optional): "Add another law
+       dictionary..." for any law dictionary you have in PDF: Black's Law
+       4th or 5th edition, Bouvier, Ballentine, Osborn or any other (see "A
+       dictionary of your own" below).
+       - Black's 4th and 5th are recognised from their title pages and read
+         with Flipbook's own Black's reader, which is made for them. Choose
+         the folder holding one edition's PDF files (or pick all its files
+         together), or a folder that holds both editions' folders: then
+         both are added, one after the other. It takes a few minutes for a
+         whole edition; they are kept in the addons\legal folder next to
+         Flipbook.exe.
   - The PDFs need a text layer (text you can select), not just scanned
     images. Your copies stay on this PC: they are never uploaded, and
     nothing you look up is sent anywhere.
@@ -737,16 +769,18 @@ For every earlier version, see "ⓘ About" > "Version history".
     it. Your own PDF files are never touched.
 
   A dictionary of your own (PDF)
-  - "🧩 Add-ons" > "Your own dictionaries (PDF)" > "Add a dictionary...".
+  - In "🧩 Add-ons": "Etymology dictionary" > "Add a dictionary..." for an
+    etymology or general dictionary, or "Legal dictionary" > "Add or
+    change..." > "Add another law dictionary..." for a law dictionary.
     Choose "PDF files..." for one PDF or the volumes of one dictionary
     (hold Ctrl to pick several), or "A folder..." for a dictionary split
     into files, such as one PDF per letter.
-  - Flipbook suggests a name (you can change it) and asks which kind it is:
-       ⚖ Legal               shown when the switch is on ⚖ Legal, after
-                             Black's Law.
-       Etymology / general   shown when the switch is on Etymology, above
-                             Webster's. Use it for an etymology dictionary,
-                             a general dictionary or any other.
+  - Flipbook suggests a name (you can change it). The box you add it from
+    sets how it is used:
+       Legal dictionary       shown when the switch is on ⚖ Legal, after
+                              Black's Law.
+       Etymology dictionary   shown when the switch is on Etymology, above
+                              Webster's.
     "Add it" reads the dictionary once (a few minutes for a big book; you
     can go on reading meanwhile) and keeps its entries in the
     addons\mydicts folder next to Flipbook.exe. The PDF is not copied or
@@ -755,8 +789,24 @@ For every earlier version, see "ⓘ About" > "Version history".
     in bold, in CAPITALS, or sticking out to the left, and it checks that
     they run in alphabetical order. A PDF that isn't a dictionary (a book
     or an article) is refused with a message.
-  - In "🧩 Add-ons" each one has "Rename", "Make it Etymology / ⚖ Legal"
-    and "Remove". Up to 20 can be added.
+  - In "🧩 Add-ons" each one is listed in its box with "Rename", "Move to
+    ⚖ Legal" (or "Move to Etymology") and "Remove". Up to 20 can be added.
+
+  Wrong dictionary? A warning
+  - Flipbook checks whether a dictionary you add looks like the kind of the
+    box you add it from. It only warns you; it never stops you.
+  - Before reading: if the PDF's title or first pages clearly point to the
+    other kind (for example a law dictionary added to the Etymology
+    dictionary), it asks: "Add as Legal" (or "Add as Etymology"), "Keep as
+    ..." or "Cancel". Black's Law 4th and 5th are always recognised.
+  - After reading: if the words found in it clearly point to the other
+    kind (many legal terms, or hardly any, among its headwords), the
+    "Dictionary added" window asks whether to move it to the other box:
+    "Move to ..." or "Keep in ...". If you keep it there, Add-ons shows
+    "⚠ looks like ..." next to it.
+  - Books that mix both (a general dictionary with many law words, a
+    book of legal maxims) are left alone when the signs aren't clear. You
+    can always move a dictionary to the other box later.
 
   Good to know
   - A dictionary of your own is read without knowing its layout, so some
@@ -886,9 +936,10 @@ For every earlier version, see "ⓘ About" > "Version history".
                            choice and the last graphics-card test.
     addons\voice\          The natural AI voice, if you downloaded it
                            (addons\voice\gpu\: its graphics-card speed-up).
-    addons\dictionary\     The Dictionary, if you downloaded it.
-    addons\legal\          The Legal dictionary, if you added it (built
-                           from Black's 2nd edition and your own PDFs).
+    addons\dictionary\     The free etymology dictionary (Webster's 1913
+                           and WordNet), if you downloaded it.
+    addons\legal\          Black's Law Dictionary, if you added it (built
+                           from the 2nd edition and your own 4th / 5th).
     addons\mydicts\        Dictionaries you added from your own PDFs
                            (mydicts.sqlite: their entries only, not the
                            PDFs).
@@ -1139,7 +1190,7 @@ For every earlier version, see "ⓘ About" > "Version history".
                      faster-qwen3-tts (CUDA graphs) and PyTorch 2.10 + CUDA
                      12.8 in a private Python 3.12 in addons\qwen, run as a
                      helper process; 24 kHz audio.
-  Dictionary         SQLite database built on your PC from Webster's 1913
+  Etymology dict.    SQLite database built on your PC from Webster's 1913
                      and Open English WordNet 2025: about 189,000 headwords,
                      16,000 word forms; lookups take a few milliseconds.
   Font               EB Garamond (Latin character sets)
@@ -1214,6 +1265,33 @@ For every earlier version, see "ⓘ About" > "Version history".
 --------------------------------------------------------------------------------
   VERSION HISTORY
 --------------------------------------------------------------------------------
+  1.8.23  (2026-11-15)  Contents links with a misread page number.
+     - On a scanned contents page, text recognition can read a page number
+       as letters ("il" for 1). Flipbook took such a line for a heading and
+       sent it to the next entry's page. Now it works out the numbers it
+       could be (only those between the entries above and below), and goes
+       to the first page that shows the entry's title. If it can't be sure,
+       it says so and stays put.
+     - A contents line with dot leaders is never treated as a heading.
+  1.8.22  (2026-11-15)  Black's 2nd edition download: retries on certificate errors.
+     - Some of archive.org's download servers had expired security
+       certificates, so the free Black's 2nd edition download stopped. Flipbook
+       now asks again (up to 20 times; archive.org answers from a different
+       server each time) and shows a small note while it does. It never skips
+       the security check. If none answers safely, it says the problem is on
+       archive.org's side and to try again later.
+  1.8.21  (2026-11-15)  Two dictionary boxes and a wrong-dictionary warning.
+     - Add-ons: "Dictionary" is now "Etymology dictionary", holding the free
+       Webster's 1913 and WordNet and "Add a dictionary..." for your own
+       etymology or general PDFs. "Legal dictionary (Black's Law)" is now
+       "Legal dictionary", holding the free Black's 2nd edition and your
+       own law dictionaries. The "Your own dictionaries (PDF)" box is gone.
+     - The Legal dictionaries window: one "Add another law dictionary..."
+       button. Black's 4th and 5th are still recognised from their title
+       pages and read with Flipbook's own Black's reader.
+     - A warning (never a block) when a dictionary looks like the other
+       kind: before reading (its title and first pages) and after reading
+       (its headwords), with "Add as / Move to ..." or "Keep".
   1.8.20  (2026-11-15)  Everyday examples.
      - The examples in this manual and in the pronunciation fixes window
        are everyday words now ("candidate", "travelled", "libraries",

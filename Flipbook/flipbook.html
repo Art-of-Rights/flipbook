@@ -270,6 +270,9 @@
   .badge.yes { color: var(--ink); background: rgba(var(--accent-rgb),.25); border-color: var(--accent); }
   .addon .btn { flex: none; min-width: 104px; justify-content: center; }
   .addon .btn.mini { min-width: 0; height: 28px; font-size: 14px; }
+  .kindWarn { color: #b26a00; font-weight: 600; margin: 0 4px; }
+  .dlNote { font-size: 13px; opacity: .8; margin: 4px 0 0; }
+  .kindNote { border-left: 3px solid #b26a00; padding: 6px 10px; background: rgba(178,106,0,.08); }
   .addon .sub { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(var(--accent-rgb),.2); }
   .addon .subrow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .addon .subrow select { height: 30px; font-size: 14px; }
@@ -767,7 +770,7 @@
   <button class="btn tool" id="lookBtn" title="Look up words (D): click a word to see its meaning. Right-click any word works too."><span class="ic">🔍</span><span class="lb">Look up words</span><span class="k">D</span></button>
   <div class="dictSw" id="dictSw" role="radiogroup" aria-label="Dictionary used by Look up words">
     <button class="btn" data-m="etym" role="radio" title="Look-up uses the general dictionary: meanings and word origins (etymology)"><span class="l">Etymology</span><span class="s">Ety</span></button>
-    <button class="btn" data-m="legal" role="radio" title="Look-up uses the legal dictionary (Black's Law); a word with no legal meaning falls back to the general dictionary"><span class="l">⚖ Legal</span><span class="s">⚖</span></button>
+    <button class="btn" data-m="legal" role="radio" title="Look-up uses the legal dictionaries; a word with no legal meaning falls back to the etymology dictionary"><span class="l">⚖ Legal</span><span class="s">⚖</span></button>
   </div>
   <button class="btn tool" id="linkBtn"><span class="ic">🔗</span><span class="lb">Page links</span><span class="k">L</span></button>
   <button class="btn tool" id="readBtn" title="Read aloud (R)"><span class="ic">🔊</span><span class="lb">Read aloud</span><span class="k">R</span></button>
@@ -787,7 +790,7 @@
 </div>
 <div id="welcome" role="dialog" aria-label="Welcome">
   <b>New to Flipbook?</b> All the tools are in the bar on the right.
-  <b>⌨ Commands</b> lists every key and mouse action, and <b>🧩 Add-ons</b> adds the natural AI voice and the Dictionary.
+  <b>⌨ Commands</b> lists every key and mouse action, and <b>🧩 Add-ons</b> adds the natural AI voice and the dictionaries.
   <div class="row"><button class="btn" id="welcomeCmds">Show commands</button><button class="btn" id="welcomeOk">Got it</button></div>
 </div>
 
@@ -1304,6 +1307,18 @@
   // The lines of a printed contents page: a page number at the right (after dot leaders or a wide gap),
   // three or more of them lined up in one column, mostly rising. A title that wraps joins its number's line.
   const LEADER = /^[.·…_\-–—:\s]+$/;
+  const STRAY = /^[.·…_\-–—:;,'‘’"“”*°•\s]+$/;    // leaders and the specks OCR finds in them
+  // (1.8.23) a page number OCR misread as letters ("il", "l", "I" for 1; "O" for 0): the numbers it could be,
+  // smallest first ("il" -> 1 or 11), or null when the word isn't such a number
+  function garbledCands(t) {
+    const g = String(t).replace(/^[‘’'"“”*]+/, "").replace(/[.,;]$/, "");
+    if (!/^[0-9lIi|!oO]{1,4}$/.test(g) || !/[lIi|!oO]/.test(g)) return null;
+    const dig = s => s.replace(/[lIi|!]/g, "1").replace(/[oO]/g, "0");
+    const vs = new Set([dig(g)]);
+    for (let j = 0; j < g.length; j++) if (/[lIi|!oO]/.test(g[j]) && g.length > 1) vs.add(dig(g.slice(0, j) + g.slice(j + 1)));
+    const out = [...vs].map(Number).filter(v => v >= 1 && v <= 9999).sort((a, b) => a - b).map(v => printedVal(String(v)));
+    return out.length ? out : null;
+  }
   function tocLines(pt) {
     if (tocLineCache.has(pt)) return tocLineCache.get(pt);
     const L = pt.all || pt.lines, found = [];
@@ -1312,8 +1327,15 @@
       const last = ws[ws.length - 1];
       let m = last.t.match(/^(?:.*?[.·…]{2,})?[.·…]?(\d{1,4}|[ivxlc]{1,7})[.,;]?$/), odd = false;
       if (!m) { m = last.t.match(/^(\d{1,2})[.,](\d{1,2})$/); if (m) { m = [m[0], m[1] + m[2]]; odd = true; } }   // OCR: "14.9" for 149
-      if (!m || (!/\d/.test(m[1]) && !ROMAN.test(m[1]))) return;
-      let k = ws.length - 2, leaders = /[.·…]{2,}./.test(last.t);
+      let k = ws.length - 2, leaders = /[.·…]{2,}./.test(last.t), cands = null;
+      if (!m || (!/\d/.test(m[1]) && !ROMAN.test(m[1]))) {
+        // (1.8.23) a page number misread by OCR ("il" or "l" for 1, "O" for 0) after dot leaders: keep the line as
+        // an entry whose page is found later from the numbers it could be (garbledCands) and its title
+        cands = garbledCands(last.t);
+        if (!cands) return;
+        while (k >= 0 && STRAY.test(ws[k].t)) { if (LEADER.test(ws[k].t)) leaders = true; k--; }
+        if (!leaders) return;
+      }
       while (k >= 0 && LEADER.test(ws[k].t)) { leaders = true; k--; }
       // the title's last word can be glued to the leaders and the number: "Worlds..........100", even the
       // whole title ("Introduction.............27", one word)
@@ -1324,15 +1346,26 @@
       const gap = k >= 0 ? last.box[0] - ws[k].box[2] : 0;
       if (!leaders && gap < 0.012) return;
       // strong: dot leaders or a wide gap; weak lines only count on a page that is clearly a contents page
+      if (cands) { found.push({ i, num: null, cands, x2: last.box[2], words, strong: false }); return; }
       found.push({ i, num: printedVal(m[1]), x2: last.box[2], words, strong: !odd && (leaders || gap >= 0.06) });
     });
     let res = [];
     if (found.filter(f => f.strong).length >= 3) {
       const xs = found.filter(f => f.strong).map(f => f.x2).sort((a, b) => a - b), mid = xs[xs.length >> 1];
-      const col = mid > 0.45 ? found.filter(f => Math.abs(f.x2 - mid) < (f.strong ? 0.07 : 0.03)) : [];
+      let col = mid > 0.45 ? found.filter(f => Math.abs(f.x2 - mid) < (f.strong || f.cands ? 0.07 : 0.03)) : [];
+      // a misread number: keep only the readings between the entries above and below it, else drop the line
+      col = col.filter((f, j) => {
+        if (!f.cands) return true;
+        let a = null, b = null;
+        for (let q = j - 1; q >= 0 && !a; q--) if (col[q].num && !col[q].num.r) a = col[q].num;
+        for (let q = j + 1; q < col.length && !b; q++) if (col[q].num && !col[q].num.r) b = col[q].num;
+        f.cands = f.cands.filter(c => (!a || c.v >= a.v) && (!b || c.v <= b.v));
+        return f.cands.length > 0;
+      });
+      const nums = col.filter(f => f.num);
       let up = 0;
-      for (let j = 1; j < col.length; j++) if (col[j].num.r !== col[j - 1].num.r || col[j].num.v >= col[j - 1].num.v) up++;
-      if (col.length >= 3 && up >= (col.length - 1) * 0.6) {
+      for (let j = 1; j < nums.length; j++) if (nums[j].num.r !== nums[j - 1].num.r || nums[j].num.v >= nums[j - 1].num.v) up++;
+      if (nums.length >= 3 && up >= (nums.length - 1) * 0.6) {
         const boxOf = ws => [Math.min(...ws.map(w => w.box[0])), Math.min(...ws.map(w => w.box[1])),
                              Math.max(...ws.map(w => w.box[2])), Math.max(...ws.map(w => w.box[3]))];
         const text = ws => ws.map(w => w.t.replace(/[.·…]{2,}.*$/, "")).filter(t => t && !LEADER.test(t)).join(" ");
@@ -1351,14 +1384,15 @@
           for (let j = f.i - 1; j > prevI && j >= f.i - 2; j--) {
             const t = text(L[j]), letters = t.replace(/[^A-Za-z]/g, "");
             if (!t || !(weak || /[-,;(—–]$/.test(t))) break;
+            if (/^(pages?|(table of )?contents)$/i.test(t.trim())) break;     // the column heading, not a title
             if (letters.length > 6 && letters.replace(/[^A-Z]/g, "").length > letters.length * 0.8) break;
             const b = boxOf(L[j]);
             if (rows[0][1] - b[3] > (rows[0][3] - rows[0][1]) * 1.2) break;    // a gap: not the same entry
             rows.unshift(b); title = t + " " + title; weak = false; used.add(j);
           }
           prevI = f.i;
-          title = title.replace(/[\s.·…]+$/, "").replace(/^[^A-Za-z0-9(“"']+/, "").replace(/\s+/g, " ").trim();
-          return { rows, printed: f.num, title, line: f.i };
+          title = title.replace(f.cands ? /[\s.·…:;,'‘’"“”*°•]+$/ : /[\s.·…]+$/, "").replace(/^[^A-Za-z0-9(“"']+/, "").replace(/\s+/g, " ").trim();
+          return f.cands ? { rows, printed: null, cands: f.cands, title, line: f.i } : { rows, printed: f.num, title, line: f.i };
         });
         // Headings without a number of their own ("Chapter IV – The Early Years", "PART FOUR") go to
         // the page of the first entry under them, when it follows within three lines (v1.8.9).
@@ -1367,7 +1401,10 @@
           if (used.has(j)) return;
           const t = text(ws).replace(/\s+/g, " ").trim();
           if (t.replace(/[^A-Za-z]/g, "").length < 3 || ws.length > 16 || /^(table of )?contents\b/i.test(t) || /^page$/i.test(t)) return;
-          const next = res.find(e => e.line > j);
+          // (1.8.23) dot leaders mean an entry whose number couldn't be read, not a heading: no link at all
+          // rather than the next entry's page
+          if (ws.some(w => LEADER.test(w.t) && /[.·…:]/.test(w.t)) || ws.some(w => /[.·…]{2,}/.test(w.t))) return;
+          const next = res.find(e => e.line > j && e.printed);
           if (!next || next.line - j > 3 || next.rows[0][1] < boxOf(ws)[3] - 0.002) return;
           heads.push({ rows: [boxOf(ws)], printed: next.printed, title: t, line: j });
         });
@@ -1409,6 +1446,7 @@
     if (L.action) return { NextPage: "Next page", PrevPage: "Previous page", FirstPage: "First page", LastPage: "Last page" }[L.action];
     if (L.url) return `Web link: ${L.url} (Flipbook doesn't open web pages)`;
     const t = L.title.length > 80 ? L.title.slice(0, 77) + "…" : L.title;
+    if (!L.printed) return `Go to: ${t} (its page number is hard to read; Flipbook finds the page by its title)`;
     return `Go to page ${L.printed.s} of the book${t ? ": " + t : ""}`;
   }
   // pointer over a link: hand cursor, a soft mark under the link, and where it goes as a tooltip
@@ -1443,12 +1481,36 @@
     // a contents line: find printed page P in the file
     const myGen = gen, ticket = ++linkBusy;
     linkJumpT = Date.now();
-    const slow = setTimeout(() => { if (ticket === linkBusy) toast(`Finding page ${L.printed.s} of the book…`); }, 250);
+    const slow = setTimeout(() => { if (ticket === linkBusy) toast(L.printed ? `Finding page ${L.printed.s} of the book…` : `Finding “${L.title}”…`); }, 250);
     let p = null;
-    try { p = await findPrinted(L.printed, h.page, L.title); } catch (e) {}
+    try { p = L.printed ? await findPrinted(L.printed, h.page, L.title) : await findGarbled(L, h.page); } catch (e) {}
     clearTimeout(slow);
     if (myGen !== gen || ticket !== linkBusy) return;
-    if (p) jumpTo(p, h.page); else toast(`Couldn't find page ${L.printed.s} of the book in this file`);
+    if (p) jumpTo(p, h.page);
+    else toast(L.printed ? `Couldn't find page ${L.printed.s} of the book in this file` : `Couldn't find “${L.title}”: its page number on the contents page can't be read`);
+  }
+  // (1.8.23) an entry whose printed number OCR misread: try the numbers it could be, smallest first, and take the
+  // first page that shows the entry's title near its top (a chapter's first page; later pages only repeat it in
+  // the running head, which the smallest number comes before). Unconfirmed: one possible number only, or a
+  // Contents-sidebar entry with that title.
+  async function findGarbled(L, fromPage) {
+    const words = normKey(L.title).split(" ").filter(w => w.length > 2);
+    const shows = async n => {
+      try {
+        const pt = await pageWords(n);
+        const top = new Set(normKey((pt.lines || []).slice(0, 8).map(ws => ws.map(w => w.t).join(" ")).join(" ")).split(" "));
+        return words.length && words.filter(w => top.has(w)).length >= Math.ceil(words.length * 0.6);
+      } catch (e) { return false; }
+    };
+    const found = [];
+    for (const c of L.cands) {
+      const p = await findPrinted(c, fromPage, "");
+      if (!p) continue;
+      found.push(p);
+      if (await shows(p)) return p;
+    }
+    if (L.cands.length === 1 && found.length === 1) return found[0];
+    return tocByTitle(L.title, fromPage);
   }
   function jumpTo(p, from) {
     p = Math.max(1, Math.min(N, p | 0));
@@ -1561,6 +1623,9 @@
       g = r.t;
     }
     // 3) a Contents entry (the PDF's bookmarks or the chapters found) with the same title, after this page
+    return tocByTitle(title, fromPage);
+  }
+  function tocByTitle(title, fromPage) {
     const words = normKey(title || "").split(" ").filter(w => w.length > 2);
     if (words.length) {
       let best = null, bestS = 0;
@@ -1616,8 +1681,11 @@
   $("linkBtn").onclick = () => setLinks(!linksOn, true);
   setLinks(linksOn, false);
   // for checking from the console / tests: the links on page n, as the page shows them
-  window.flipbookLinks = n => { const d = linksOf(n); return d ? d.links.map(L => ({ to: L.page || L.action || L.url || "p. " + L.printed.s, title: L.title, rows: L.rows.length, box: L.rows[L.rows.length - 1].map(v => +v.toFixed(4)) })) : null; };
+  window.flipbookLinks = n => { const d = linksOf(n); return d ? d.links.map(L => ({ to: L.page || L.action || L.url || (L.printed ? "p. " + L.printed.s : "p. ?" + L.cands.map(c => c.s).join("|")), title: L.title, rows: L.rows.length, box: L.rows[L.rows.length - 1].map(v => +v.toFixed(4)) })) : null; };
   window.flipbookFindPrinted = (s, from) => findPrinted(printedVal(s), from || 1, "");
+  // (1.8.23) where a contents link goes, as a click would take it: flipbookFollowTarget(page, index of the link)
+  window.flipbookFollowTarget = async (n, i) => { const d = linksOf(n), L = d && d.links[i]; if (!L) return null;
+    return L.page || (L.printed ? findPrinted(L.printed, n, L.title) : findGarbled(L, n)); };
   window.flipbookPrinted = async n => { const v = await printedNum(n, true); return v && v.s; };   // the printed number read on page n
 
   /* ---------------- controls ---------------- */
@@ -4160,7 +4228,7 @@
     });
     if (save) {
       try { localStorage.setItem("flip-dict-mode", dictMode); } catch (e) {}
-      toast(dictMode === "legal" ? "Look-up: ⚖ Legal dictionaries" : "Look-up: Etymology (general dictionary)");
+      toast(dictMode === "legal" ? "Look-up: ⚖ Legal dictionaries" : "Look-up: Etymology dictionaries");
       if ($("dictCard").style.display === "block" && lastLook) lookUp(lastLook, cardAt[0], cardAt[1]);   // show the open word again
     }
   }
@@ -4221,7 +4289,7 @@
     if (!dictInfo.installed && gm && gm.found) return renderCard(word, { webster: [], wordnet: [] }, x, y, note, gm);
     if (!dictInfo.installed) {
       showCardAt(x, y, `<div class="dh"><span class="dw">${escHtml(word)}</span><span class="dx"><button data-act="close">✕</button></span></div>${note}
-        <p class="note">For its everyday meaning and word origin, add the <b>Dictionary</b> add-on (🧩 Add-ons).</p>`);
+        <p class="note">For its everyday meaning and word origin, add the free <b>Etymology dictionary</b> (🧩 Add-ons).</p>`);
       $("dictCard").onclick = ev => { const b = ev.target.closest("button"); if (!b) return;
         if (b.dataset.word) return lookUp(b.dataset.word, cardAt[0], cardAt[1]); if (b.dataset.act === "close") closeCard(); };
       return;
@@ -4347,8 +4415,8 @@
     const size = mb(dictInfo.size);
     if (dictInfo.download && /downloading|verifying|building/.test(dictInfo.download.state)) return showDictProgress();
     showCardAt(x, y, `<div class="dh"><span class="dw">${escHtml(word)}</span><span class="dx"><button data-act="close">✕</button></span></div>
-      <p>To see meanings and word origins, add the free <b>Dictionary add-on</b>.</p>
-      <div class="foot"><button class="linkish" data-act="get">Get the Dictionary add-on (${size})…</button></div>`);
+      <p>To see meanings and word origins, add the free <b>Etymology dictionary</b> (Webster's 1913 and WordNet).</p>
+      <div class="foot"><button class="linkish" data-act="get">Get the free etymology dictionary (${size})…</button></div>`);
     $("dictCard").onclick = ev => {
       const b = ev.target.closest("button"); if (!b) return;
       if (b.dataset.act === "close") closeCard();
@@ -4357,7 +4425,7 @@
   }
   function dictOfferDialog(back) {
     const size = mb(dictInfo.size);
-    dialog(`<h3>Add the Dictionary?</h3>
+    dialog(`<h3>Add the free etymology dictionary?</h3>
       <p>Look up any word in your books: meanings, word origins (etymology), similar words and pronunciation.</p>
       <ul>
         <li>Download: about <b>${size}</b> (one time, needs internet), from Project Gutenberg and the Open English WordNet project</li>
@@ -4388,7 +4456,7 @@
       }
       dictShown = d.state;
       const err = d.state === "error" ? `<p class="err">${escHtml(d.error)}</p>` : d.state === "cancelled" ? `<p class="muted">Cancelled. Trying again continues where it stopped.</p>` : "";
-      dialog(`<h3>Dictionary add-on</h3>
+      dialog(`<h3>Etymology dictionary: Webster's 1913 and WordNet</h3>
         <p>${active ? (d.state === "building" ? "Building the dictionary…" : d.state === "verifying" ? "Checking the download…" : "Downloading…") : "Stopped."}</p>
         <div class="bar"><i style="width:${d.state === "building" ? 100 : pct}%"></i></div>
         <p class="muted">${escHtml(line)}</p>${err}`,
@@ -4415,7 +4483,7 @@
     if (legalBusy()) return showLegalProgress();
     showCardAt(x, y, `<div class="dh"><span class="dw">${escHtml(word)}</span><span class="dx"><button data-act="close">✕</button></span></div>
       <p>Look-up is set to <b>⚖ Legal</b>, but no legal dictionary has been added yet.</p>
-      <div class="foot"><button class="linkish" data-act="get">Add the legal dictionary (Black's Law)…</button>
+      <div class="foot"><button class="linkish" data-act="get">Add a legal dictionary…</button>
       <button class="linkish" data-act="ety">Use Etymology instead</button></div>`);
     $("dictCard").onclick = ev => {
       const b = ev.target.closest("button"); if (!b) return;
@@ -4430,29 +4498,25 @@
   // 2. your own copies: Black's 4th/5th (one folder may hold both) and any other law dictionary in PDF
   async function legalDialog(back) {
     await Promise.all([refreshLegal(), refreshDict(), refreshMydict()]);
-    const row = (id, what) => `<li><b>${escHtml(shortSrc(id))}</b> — ${what} ${hasSrc(id) ? `<span class="badge yes">✓ Added</span>` : ""}</li>`;
     const needB2 = !hasSrc("blacks2"), needDict = dictInfo.available && !dictInfo.installed;
     const free = [needB2 ? `Black's Law Dictionary, 2nd edition (1910, public domain, about <b>${mb(legalInfo.size || 7190959)}</b> from archive.org)` : "",
-                  needDict ? `the general <b>Dictionary</b> (Webster's 1913 and WordNet, about <b>${mb(dictInfo.size)}</b>), which answers when a word has no legal meaning and adds word origins` : ""].filter(Boolean);
-    const mine = myDicts("legal").map(t => `<li><b>${escHtml(t.title)}</b> — your own PDF, ${Number(t.entries || 0).toLocaleString()} entries <span class="badge yes">✓ Added</span></li>`).join("");
+                  needDict ? `the free etymology dictionary (<b>Webster's 1913 and WordNet</b>, about <b>${mb(dictInfo.size)}</b>), which answers when a word has no legal meaning and adds word origins` : ""].filter(Boolean);
+    const added = ["blacks5", "blacks4"].filter(hasSrc).map(id => `<li><b>${escHtml(shortSrc(id))}</b> — your own PDFs <span class="badge yes">✓ Added</span></li>`).join("")
+      + myDicts("legal").map(t => `<li><b>${escHtml(t.title)}</b> — your own PDF, ${Number(t.entries || 0).toLocaleString()} entries <span class="badge yes">✓ Added</span></li>`).join("");
     dialog(`<h3>Legal dictionaries</h3>
       <p>When Look-up is set to <b>⚖ Legal</b>, a word is looked up in every legal dictionary you have added: Black's Law (newest edition first),
-      then your own. A word with no legal meaning is shown from the general (etymology) dictionary instead.</p>
+      then your own. A word with no legal meaning is shown from the etymology dictionary instead.</p>
       <h4 class="step">1. The free ones</h4>
       ${free.length ? `<p><b>Get the free ones</b> downloads ${free.join(" and ")}. One time, needs internet; afterwards they work offline.</p>`
-                    : `<p>✓ Black's 2nd edition (1910)${dictInfo.available ? " and the general Dictionary are" : " is"} added.</p>`}
-      <h4 class="step">2. Your own copies (optional)</h4>
-      <ul>
-        ${row("blacks4", "choose the folder with its PDF files.")}
-        ${row("blacks5", "choose the folder with its PDF files. A folder that holds both editions' folders adds both, one after the other.")}
-        <li><b>Any other law dictionary in PDF</b> (Bouvier, Ballentine, Osborn…) — <i>Add another law dictionary</i>.</li>
-        ${mine}
-      </ul>
+                    : `<p>✓ Black's 2nd edition (1910)${dictInfo.available ? " and Webster's 1913 and WordNet are" : " is"} added.</p>`}
+      <h4 class="step">2. Your own law dictionaries (optional)</h4>
+      <p>Any law dictionary you have in PDF: Black's Law 4th or 5th edition, Bouvier, Ballentine, Osborn or any other — <i>Add another law dictionary</i>.
+      Black's 4th and 5th are recognised from their title pages and read with Flipbook's own Black's reader; a folder that holds both editions' folders adds both, one after the other.</p>
+      ${added ? `<ul>${added}</ul>` : ""}
       <p class="muted">Flipbook reads the PDFs once and keeps the entries in the <i>addons</i> folder next to Flipbook (a few minutes for a big book).
       Your PDFs are not copied or changed and stay on this PC; nothing you look up is sent anywhere. They need a text layer (not just scanned images).</p>`,
       [[back ? "Back" : "Close", back || closeDialog],
-       ["Add your Black's PDFs (folder)…", () => legalImport("folder", back)],
-       ["Add another law dictionary…", () => mydictAdd("legal", () => legalDialog(back))],
+       ["Add another law dictionary…", () => mydictAdd("legal", () => legalDialog(back)), !free.length],
        ...(free.length ? [["Get the free ones", () => getFreeLegal(back), true]] : [])]);
   }
   async function getFreeLegal(back) {
@@ -4460,29 +4524,18 @@
     if (dictInfo.available && !dictInfo.installed && !dictBusy()) { const r = await apiPost("api/dict/install"); if (r) dictInfo = (await r.json().catch(() => null)) || dictInfo; }
     showLegalProgress(back, true);
   }
-  async function legalImport(kind, back) {
-    if (!appApi() || !window.pywebview.api.legal_import) {
-      return dialog(`<h3>Add your Black's PDFs</h3><p>Choosing a folder needs the Flipbook app (Flipbook.exe).</p>`, [["Close", back || closeDialog, true]]);
-    }
-    let r;
-    try { r = await window.pywebview.api.legal_import(kind); } catch (e) { r = { error: String(e) }; }
-    if (!r || r.cancelled) return legalDialog(back);
-    if (r.error) return dialog(`<h3>Add your Black's PDFs</h3><p class="err">${escHtml(r.error)}</p>
-      <p class="muted">Choose the folder that holds one edition's PDF files (for example "Black's Law 5th Edition A-Z"), or a folder that holds both editions' folders. Flipbook recognises the 4th and 5th editions from their title pages or the folder name. For any other law dictionary, use <i>Add another law dictionary</i>.</p>`,
-      [["Back", () => legalDialog(back)], ["Choose again…", () => legalImport(kind, back), true]]);
-    legalInfo = r;
-    showLegalProgress(back);
-  }
-  // progress of a legal build (and, with withDict, of the general Dictionary fetched by "Get the free ones")
+  // (1.8.21: Black's 4th/5th are added through "Add another law dictionary…" → mydictPick; serve.mydict_prepare
+  // recognises them and /api/mydict/install builds them with legal.py's reader)
+  // progress of a legal build (and, with withDict, of the etymology dictionary fetched by "Get the free ones")
   let legalTimer = 0, legalShown = "";
   function showLegalProgress(back, withDict) {
     legalShown = "";
     const dictLine = () => {
       const g = dictInfo.download || {};
-      if (dictInfo.installed) return "General dictionary: ✓ added";
-      if (g.state === "building") return "General dictionary: " + (g.phase || "building…");
-      if (dictBusy()) return `General dictionary: downloading ${g.total ? Math.floor(100 * g.done / g.total) : 0}%`;
-      if (g.state === "error") return "General dictionary: " + (g.error || "stopped");
+      if (dictInfo.installed) return "Etymology dictionary: ✓ added";
+      if (g.state === "building") return "Etymology dictionary: " + (g.phase || "building…");
+      if (dictBusy()) return `Etymology dictionary: downloading ${g.total ? Math.floor(100 * g.done / g.total) : 0}%`;
+      if (g.state === "error") return "Etymology dictionary: " + (g.error || "stopped");
       return "";
     };
     const render = () => {
@@ -4494,8 +4547,8 @@
         clearInterval(legalTimer);
         const what = (legalInfo.sources || []).map(s => `<li>${escHtml(shortSrc(s.id))}: ${Number(s.entries || 0).toLocaleString()} entries</li>`).join("")
           + myDicts("legal").map(t => `<li>${escHtml(t.title)}: ${Number(t.entries || 0).toLocaleString()} entries</li>`).join("")
-          + (withDict && dictInfo.installed ? `<li>General dictionary (Webster's 1913 and WordNet)</li>` : "");
-        const gErr = withDict && !dictInfo.installed && (dictInfo.download || {}).state === "error" ? `<p class="err">General dictionary: ${escHtml(dictInfo.download.error || "it stopped")}. Try again from 🧩 Add-ons.</p>` : "";
+          + (withDict && dictInfo.installed ? `<li>Etymology dictionary (Webster's 1913 and WordNet)</li>` : "");
+        const gErr = withDict && !dictInfo.installed && (dictInfo.download || {}).state === "error" ? `<p class="err">Etymology dictionary:${escHtml(dictInfo.download.error || "it stopped")}. Try again from 🧩 Add-ons.</p>` : "";
         return dialog(`<h3>Legal dictionary ready</h3><ul>${what}</ul>${gErr}<p>Set Look-up to <b>⚖ Legal</b> (under 🔍 Look up words) and click or right-click a word.</p>`,
           [["Add more…", () => legalDialog(back)], ["Done", () => { closeDialog(); setDictMode("legal", true); }, true]]);
       }
@@ -4509,15 +4562,17 @@
         const bar = $("raDlgBox").querySelector(".bar i"); if (bar) bar.style.width = pct + "%";
         const m = $("raDlgBox").querySelector(".muted"); if (m) m.textContent = line;
         const x = $("raDlgBox").querySelector(".dictline"); if (x) x.textContent = extra;
+        const nt = $("raDlgBox").querySelector(".dlNote"); if (nt) { nt.textContent = lActive && d.note ? "ⓘ " + d.note : ""; nt.hidden = !(lActive && d.note); }
         return;
       }
       legalShown = key;
       const err = d.state === "error" ? `<p class="err">${escHtml(d.error || "Something went wrong.")}</p>` : d.state === "cancelled" ? `<p class="muted">Cancelled.</p>` : "";
-      const title = lActive || !gActive ? `Legal dictionary${d.source ? ": " + escHtml(shortSrc(d.source)) : ""}${escHtml(queue)}` : "General dictionary";
+      const title = lActive || !gActive ? `Legal dictionary${d.source ? ": " + escHtml(shortSrc(d.source)) : ""}${escHtml(queue)}` : "Etymology dictionary";
       dialog(`<h3>${title}</h3>
-        <p>${active ? (lActive ? (d.state === "building" ? "Reading the dictionary into Flipbook…" : "Downloading…") : "Getting the general dictionary…") : "Stopped."}</p>
+        <p>${active ? (lActive ? (d.state === "building" ? "Reading the dictionary into Flipbook…" : "Downloading…") : "Getting the etymology dictionary…") : "Stopped."}</p>
         <div class="bar"><i style="width:${pct}%"></i></div>
-        <p class="muted">${escHtml(line)}</p><p class="muted dictline">${escHtml(extra)}</p>${err}`,
+        <p class="muted">${escHtml(line)}</p><p class="muted dictline">${escHtml(extra)}</p>
+        <p class="dlNote"${lActive && d.note ? "" : " hidden"}>${lActive && d.note ? "ⓘ " + escHtml(d.note) : ""}</p>${err}`,
         active ? [["Cancel", async () => { if (lActive) await apiPost("api/legal/cancel"); if (gActive) await apiPost("api/dict/cancel"); }], ["Hide", closeDialog, true]]
                : [["Close", back || closeDialog], ["Back", () => legalDialog(back), true]]);
     };
@@ -4555,33 +4610,50 @@
         <li><b>A folder…</b> — a folder holding one dictionary split into files, for example one PDF per letter</li>
       </ul>
       <p class="muted">The PDF needs real text: most do, and a scan works if it has been through text recognition (OCR). Dictionaries whose headwords stand out
-      (bold, CAPITALS, or sticking out to the left) read best. Black's 4th and 5th have their own, better reader: <i>Add your Black's PDFs</i>.</p>`,
+      (bold, CAPITALS, or sticking out to the left) read best.${kind === "legal" ? ` Black's Law 4th and 5th edition are recognised from their title pages and read with Flipbook's own Black's reader:
+      choose the folder with an edition's PDF files, or a folder holding both editions' folders.` : ""}</p>`,
       [[back ? "Back" : "Cancel", back || closeDialog], ["A folder…", () => mydictPick("folder", kind, back)], ["PDF files…", () => mydictPick("files", kind, back), true]]);
   }
+  const BOX_NAME = { legal: "Legal dictionary", general: "Etymology dictionary" };
   async function mydictPick(how, kind, back) {
     let r;
     try { r = await window.pywebview.api.mydict_pick(how); } catch (e) { r = { error: String(e) }; }
     if (!r || r.cancelled) return mydictAdd(kind, back);
     if (r.error) return dialog(`<h3>Add a dictionary</h3><p class="err">${escHtml(r.error)}</p>`,
       [["Back", () => mydictAdd(kind, back)], ["Choose again…", () => mydictPick(how, kind, back), true]]);
-    mydictConfirm(r, kind || r.kind || "general", kind, back);
+    kindCheck(r, kind || r.kind || "general", back, k => mydictConfirm(r, k, kind, back), () => mydictAdd(kind, back));
+  }
+  // the wrong-dictionary warning before reading (1.8.21): a warning, never a block. r.evidence is the kind the PDF's
+  // title or first pages clearly point to (null when unsure); `box` is the box it is being added from.
+  function kindCheck(r, box, back, go, cancel) {
+    const other = r.evidence;
+    if (!other || other === box || !BOX_NAME[other]) return go(box);
+    const looks = other === "legal" ? "a law dictionary" : "an etymology or general dictionary, not a law dictionary";
+    const why = r.blacks && r.blacks.length ? "its title page" : (r.why || "its title and first pages");
+    dialog(`<h3>Is this the right dictionary?</h3>
+      <p class="kindNote">⚠ <b>${escHtml(r.title || "This PDF")}</b> looks like ${looks} (from ${escHtml(why)}),
+      but you're adding it to the <b>${BOX_NAME[box]}</b>.</p>
+      <p>Add it as ${other === "legal" ? "a <b>Legal</b>" : "an <b>Etymology</b>"} dictionary instead? It will then be used when Look-up is set to <b>${KIND_NAME[other]}</b>.
+      If you know it belongs where you put it, keep it there. You can move it later in 🧩 Add-ons.</p>`,
+      [["Cancel", cancel], [`Keep as ${box === "legal" ? "Legal" : "Etymology"}`, () => go(box)],
+       [`Add as ${other === "legal" ? "Legal" : "Etymology"}`, () => go(other), true]]);
   }
   function mydictConfirm(r, k, kind, back) {
     const names = (r.names || []).map(escHtml).join(", ") + (r.count > (r.names || []).length ? `, … (${r.count} files)` : "");
+    const blacks = k === "legal" && r.blacks && r.blacks.length;
     dialog(`<h3>Add this dictionary?</h3>
       <p class="muted">${r.count} PDF file${r.count === 1 ? "" : "s"}${r.pages ? ` · ${Number(r.pages).toLocaleString()} pages` : ""}: ${names}</p>
-      <label class="fld">Name <input id="mdName" maxlength="80" value="${escHtml(r.title || "")}"></label>
-      <p>Which kind of dictionary is it?</p>
-      <label class="check"><input type="radio" name="mdKind" value="legal"${k === "legal" ? " checked" : ""}><span><b>⚖ Legal</b> — shown when Look-up is set to ⚖ Legal, after Black's Law</span></label>
-      <label class="check"><input type="radio" name="mdKind" value="general"${k !== "legal" ? " checked" : ""}><span><b>Etymology / general</b> — shown when Look-up is set to Etymology, above Webster's</span></label>
-      <p class="muted">Reading a big dictionary takes a few minutes; you can go on reading meanwhile. You can rename it or change its kind later in 🧩 Add-ons.</p>`,
+      ${blacks ? `<p>Recognised: <b>${r.blacks.map(e => escHtml(shortSrc(e))).join("</b> and <b>")}</b>. Flipbook reads ${r.blacks.length > 1 ? "them" : "it"} with its own Black's reader${r.blacks.length > 1 ? ", one after the other" : ""}.</p>`
+               : `<label class="fld">Name <input id="mdName" maxlength="80" value="${escHtml(r.title || "")}"></label>`}
+      <p>It goes in the <b>${BOX_NAME[k]}</b>: shown when Look-up is set to <b>${KIND_NAME[k]}</b>${k === "legal" ? (blacks ? "" : ", after Black's Law") : ", above Webster's"}.</p>
+      <p class="muted">Reading a big dictionary takes a few minutes; you can go on reading meanwhile.${blacks ? "" : " You can rename it or move it to the other box later in 🧩 Add-ons."}</p>`,
       [["Back", () => mydictAdd(kind, back)], ["Add it", async () => {
         const title = (($("mdName") || {}).value || "").trim() || r.title || "My dictionary";
-        const kk = (document.querySelector('input[name="mdKind"]:checked') || {}).value || "general";
-        const res = await apiPost("api/mydict/install", { token: r.token, title, kind: kk });
+        const res = await apiPost("api/mydict/install", { token: r.token, title, kind: k });
         const j = res ? await res.json().catch(() => null) : null;
         if (!res || !res.ok || !j) return dialog(`<h3>Add a dictionary</h3><p class="err">${escHtml((j && j.error) || "It couldn't be started.")}</p>`,
           [["Back", () => mydictAdd(kind, back), true]]);
+        if (j.legal) { legalInfo = j.legal; delete j.legal; mydictInfo = j; return showLegalProgress(back); }   // Black's 4th/5th
         mydictInfo = j;
         showMydictProgress(back);
       }, true]]);
@@ -4597,11 +4669,26 @@
         clearInterval(mydictTimer);
         const it = myDicts().find(t => t.id === d.source) || {};
         const k = it.kind || d.kind || "general";
+        const done = kk => { setDictMode(kk === "legal" ? "legal" : "etym", true); back ? back() : closeDialog(); };
+        // the wrong-dictionary warning after reading (1.8.21): the headwords found point to the other kind
+        const ck = it.content_kind || d.content_kind;
+        if (ck && ck !== k && KIND_NAME[ck] && it.id) {
+          return dialog(`<h3>Dictionary added — is it in the right box?</h3>
+            <p><b>${escHtml(it.title || d.title || "")}</b>: ${Number(it.entries || 0).toLocaleString()} entries, in the <b>${BOX_NAME[k]}</b>.</p>
+            <p class="kindNote">⚠ Its words look like ${ck === "legal" ? "a law dictionary's: many of its headwords are legal terms" : "an etymology or general dictionary's: few of its headwords are legal terms"}.</p>
+            <p>Move it to the <b>${BOX_NAME[ck]}</b>? It will then be used when Look-up is set to <b>${KIND_NAME[ck]}</b>. If you know it belongs where it is, keep it there.</p>`,
+            [[`Keep in ${k === "legal" ? "Legal" : "Etymology"}`, () => done(k)],
+             [`Move to ${ck === "legal" ? "Legal" : "Etymology"}`, async () => {
+               const res = await apiPost("api/mydict/kind", { id: it.id, kind: ck });
+               if (res && res.ok) { mydictInfo = (await res.json().catch(() => null)) || mydictInfo; return done(ck); }
+               dialog(`<h3>${escHtml(it.title || "")}</h3><p class="err">It couldn't be moved. Try again in 🧩 Add-ons.</p>`, [["Close", () => done(k), true]]);
+             }, true]]);
+        }
         return dialog(`<h3>Dictionary added</h3>
-          <p><b>${escHtml(it.title || d.title || "")}</b>: ${Number(it.entries || 0).toLocaleString()} entries.</p>
+          <p><b>${escHtml(it.title || d.title || "")}</b>: ${Number(it.entries || 0).toLocaleString()} entries, in the <b>${BOX_NAME[k]}</b>.</p>
           <p>It is used when Look-up is set to <b>${KIND_NAME[k]}</b> (the switch under 🔍 Look up words). Right-click a word to look it up.</p>
           <p class="muted">Flipbook found the entries by itself, so a few may be cut short or run together, especially in scanned books.</p>`,
-          [["Add another…", () => mydictAdd(null, back)], ["Done", () => { setDictMode(k === "legal" ? "legal" : "etym", true); back ? back() : closeDialog(); }, true]]);
+          [["Add another…", () => mydictAdd(k, back)], ["Done", () => done(k), true]]);
       }
       const line = (d.message || "Reading…") + ` · ${Math.floor(d.pct || 0)}%`;
       if (mydictShown === d.state && $("raDlg").style.display !== "none" && $("raDlgBox").querySelector(".bar")) {
@@ -4616,7 +4703,7 @@
         <div class="bar"><i style="width:${Math.floor(d.pct || 0)}%"></i></div>
         <p class="muted">${escHtml(line)}</p>${err}`,
         active ? [["Cancel", async () => { await apiPost("api/mydict/cancel"); }], ["Hide", closeDialog, true]]
-               : [["Close", back || closeDialog], ["Try another…", () => mydictAdd(d.kind || null, back), true]]);
+               : [["Close", back || closeDialog], ["Try another…", () => mydictAdd(d.kind || "general", back), true]]);
     };
     render();
     clearInterval(mydictTimer);
@@ -4629,34 +4716,74 @@
       render();
     }, 800);
   }
-  function mydictRow() {
-    const M = mydictInfo;
-    if (!M || !M.available) return "";
-    const b = mydictBusy(), d = M.build || {};
-    const list = myDicts().map(t => `<b>${escHtml(t.title)}</b> · ${KIND_NAME[t.kind] || escHtml(t.kind)} · ${Number(t.entries || 0).toLocaleString()} entries
+  // the user's own PDF dictionaries of one kind, listed inside that kind's box (1.8.21): Rename / Move / Remove,
+  // and a ⚠ note when the words read from it point to the other kind (mydict content_kind)
+  function mineList(kind) {
+    return myDicts(kind).map(t => `<b>${escHtml(t.title)}</b> · your own PDF · ${Number(t.entries || 0).toLocaleString()} entries
+      ${t.content_kind && t.content_kind !== t.kind ? `<span class="kindWarn">⚠ looks like ${t.content_kind === "legal" ? "a law dictionary" : "an etymology / general dictionary"}</span>` : ""}
       <button class="linkish" data-act="mdren" data-id="${escHtml(t.id)}">Rename</button>
-      <button class="linkish" data-act="mdkind" data-id="${escHtml(t.id)}">Make it ${t.kind === "legal" ? "Etymology" : "⚖ Legal"}</button>
+      <button class="linkish" data-act="mdkind" data-id="${escHtml(t.id)}">Move to ${t.kind === "legal" ? "Etymology" : "⚖ Legal"}</button>
       <button class="linkish" data-act="mdrm" data-id="${escHtml(t.id)}">Remove</button>`).join("<br>");
-    const badge = b ? `<span class="badge">Reading… ${Math.floor(d.pct || 0)}%</span>` : M.installed ? `<span class="badge yes">✓ ${myDicts().length} added</span>` : `<span class="badge">None yet</span>`;
-    return `<div class="addon" data-id="mydict"><div class="ai"><div class="an">Your own dictionaries (PDF) ${badge}</div>
-      <p class="ad">Add any dictionary you have as a PDF, legal or general (etymology). Legal ones are shown under <b>⚖ Legal</b> after Black's;
-      general ones under <b>Etymology</b>, above Webster's.</p>
-      ${list ? `<p class="muted ad">${list}${M.bytes ? `<br>Uses about ${mb(M.bytes)} of disk space` : ""}</p>` : ""}
-      ${!b && d.state === "error" ? `<p class="err ad">${escHtml(d.error || "")}</p>` : ""}</div>
-      <button class="btn${M.installed ? "" : " primary"}" data-act="mydict">${b ? "Show progress" : "Add a dictionary…"}</button></div>`;
   }
+  const mdBuilding = kind => mydictBusy() && ((mydictInfo.build || {}).kind || "general") === kind;
+  const mdProgress = kind => mdBuilding(kind) ? `<p class="ad">Reading <b>${escHtml((mydictInfo.build || {}).title || "your dictionary")}</b>… ${Math.floor((mydictInfo.build || {}).pct || 0)}%
+      <button class="linkish" data-act="mdprog">Show progress</button></p>` : "";
+  const mdError = kind => { const d = mydictInfo.build || {};
+    return d.state === "error" && (d.kind || "general") === kind && d.error ? `<p class="err ad">${escHtml(d.error)}</p>` : ""; };
+  // "Etymology dictionary" (1.8.21, was "Dictionary"): the free Webster's 1913 + WordNet download AND the user's own
+  // etymology / general dictionaries (PDF), in one box
+  function etymRow(busy) {
+    const D = dictInfo, M = mydictInfo || {};
+    if (!D.available && !M.available) return "";
+    const d = D.download, b = busy(d, /downloading|verifying|building/);
+    const pct = d && d.total ? Math.floor(100 * d.done / d.total) : 0;
+    const n = myDicts("general").length;
+    const badge = D.installed || n ? `<span class="badge yes">✓ Added</span>`
+      : b ? `<span class="badge">${d.state === "building" ? "Building…" : "Downloading " + pct + "%"}</span>` : `<span class="badge">Not added</span>`;
+    const free = !D.available ? "" : D.installed
+      ? `<b>Webster's 1913 and WordNet</b> (free) · uses about ${mb(D.size)} <button class="linkish" data-act="dict">Remove…</button>`
+      : b ? `<b>Webster's 1913 and WordNet</b> (free) · ${d.state === "building" ? "building…" : "downloading " + pct + "%"} <button class="linkish" data-act="dict">Show progress</button>`
+      : `<b>Webster's 1913 and WordNet</b> (free download, about ${mb(D.size)}, one time, needs internet)
+         <button class="btn mini${n ? "" : " primary"}" data-act="dict">Download…</button>`;
+    const list = M.available ? mineList("general") : "";
+    return `<div class="addon" data-id="etym"><div class="ai"><div class="an">Etymology dictionary ${badge}</div>
+      <p class="ad">Meanings, word origins and pronunciation when you look up a word (🔍 Look up words, or right-click a word) with Look-up set to <b>Etymology</b>.
+      Get the free one, add your own etymology or general dictionaries in PDF, or both: your own are shown above Webster's.</p>
+      ${free ? `<p class="ad">${free}</p>` : ""}
+      ${list ? `<p class="muted ad">${list}</p>` : ""}${mdProgress("general")}${mdError("general")}</div>
+      ${M.available ? `<button class="btn${D.installed || n ? "" : " primary"}" data-act="mydict" data-kind="general">Add a dictionary…</button>` : ""}</div>`;
+  }
+  // "Legal dictionary" (1.8.21, was "Legal dictionary (Black's Law)"): the free Black's 2nd edition AND the user's own
+  // law dictionaries (Black's 4th/5th with their own reader, any other through mydict), in one box
   function legalRow() {
-    const L = legalInfo;
+    const L = legalInfo, M = mydictInfo || {};
     if (!L || !L.available) return "";
     const b = legalBusy(), d = L.download || {};
-    const badge = L.installed ? `<span class="badge yes">✓ Added</span>` : b ? `<span class="badge">${d.state === "building" ? "Building…" : "Downloading"} ${Math.floor(d.pct || 0)}%</span>` : `<span class="badge">Not added</span>`;
-    const srcs = (L.sources || []).map(s => `${escHtml(shortSrc(s.id))} (${Number(s.entries || 0).toLocaleString()} entries)
-      <button class="linkish" data-act="legalrm" data-src="${s.id}">Remove</button>`).join("<br>");
-    return `<div class="addon" data-id="legal"><div class="ai"><div class="an">Legal dictionary (Black's Law) ${badge}</div>
-      <p class="ad">Legal meanings when Look-up is set to <b>⚖ Legal</b> (the switch under 🔍 Look up words): Black's 2nd edition (free) and your own 4th / 5th edition PDFs. Other law dictionaries: <i>Your own dictionaries</i> below.</p>
-      ${srcs ? `<p class="muted ad">${srcs}${L.bytes ? `<br>Uses about ${mb(L.bytes)} of disk space` : ""}</p>` : ""}
-      ${!b && d.state === "error" ? `<p class="err ad">${escHtml(d.error || "")}</p>` : ""}</div>
-      <button class="btn${L.installed ? "" : " primary"}" data-act="legal">${b ? "Show progress" : L.installed ? "Add or change…" : "Add…"}</button></div>`;
+    const mine = M.available ? myDicts("legal") : [];
+    const any = L.installed || mine.length;
+    const badge = b ? `<span class="badge">${d.state === "building" ? "Building…" : "Downloading"} ${Math.floor(d.pct || 0)}%</span>`
+      : any ? `<span class="badge yes">✓ Added</span>` : `<span class="badge">Not added</span>`;
+    const free = hasSrc("blacks2")
+      ? `<b>${escHtml(shortSrc("blacks2"))}</b> (free) · ${Number(((L.sources || []).find(s => s.id === "blacks2") || {}).entries || 0).toLocaleString()} entries
+         <button class="linkish" data-act="legalrm" data-src="blacks2">Remove</button>`
+      : b && d.source === "blacks2" ? `<b>${escHtml(shortSrc("blacks2"))}</b> (free) · ${d.state === "building" ? "building…" : "downloading"} ${Math.floor(d.pct || 0)}%
+         <button class="linkish" data-act="legal">Show progress</button>`
+      : `<b>${escHtml(shortSrc("blacks2"))}</b> (free download, about ${mb(L.size || 7190959)}, one time, needs internet)
+         <button class="btn mini${any ? "" : " primary"}" data-act="legalfree"${b ? " disabled" : ""}>Download…</button>`;
+    const own = (L.sources || []).filter(s => s.id !== "blacks2").map(s => `<b>${escHtml(shortSrc(s.id))}</b> · your own PDFs · ${Number(s.entries || 0).toLocaleString()} entries
+      <button class="linkish" data-act="legalrm" data-src="${s.id}">Remove</button>`);
+    const ml = M.available ? mineList("legal") : "";
+    const list = own.concat(ml ? [ml] : []).join("<br>");
+    const building = b && d.source && d.source !== "blacks2" ? `<p class="ad">Reading <b>${escHtml(shortSrc(d.source))}</b>… ${Math.floor(d.pct || 0)}%
+      <button class="linkish" data-act="legal">Show progress</button></p>` : "";
+    return `<div class="addon" data-id="legal"><div class="ai"><div class="an">Legal dictionary ${badge}</div>
+      <p class="ad">Legal meanings when Look-up is set to <b>⚖ Legal</b> (the switch under 🔍 Look up words). Get the free Black's Law 2nd edition,
+      add your own law dictionaries in PDF (Black's 4th or 5th edition, or any other), or both. A word with no legal meaning is shown from the etymology dictionary.</p>
+      <p class="ad">${free}</p>
+      ${list ? `<p class="muted ad">${list}</p>` : ""}${building}${mdProgress("legal")}${mdError("legal")}
+      ${!b && d.state === "error" ? `<p class="err ad">${escHtml(d.error || "")}</p>` : ""}
+      ${L.bytes ? `<p class="muted ad">Black's Law editions use about ${mb(L.bytes)} of disk space</p>` : ""}</div>
+      <button class="btn${any ? "" : " primary"}" data-act="legal">${b ? "Show progress" : any ? "Add or change…" : "Add…"}</button></div>`;
   }
 
   /* ---- add-ons manager (tools bar 🧩, Library screen): each add-on with an Add or Remove button ---- */
@@ -4751,8 +4878,6 @@
     const list = [];
     if (voiceInfo.engine) list.push({ id: "voice", name: "Natural AI voice", info: voiceInfo, re: /downloading|verifying/,
       desc: "A human-sounding voice for 🔊 Read aloud, instead of the standard Windows voice, with American and British voices to choose from." });
-    if (dictInfo.available) list.push({ id: "dict", name: "Dictionary", info: dictInfo, re: /downloading|verifying|building/,
-      desc: "Meanings, word origins and pronunciation when you look up a word (🔍 Look up words, or right-click a word)." });
     const card = {};
     list.forEach(a => card[a.id] = (() => {
       const d = a.info.download, b = busy(d, a.re);
@@ -4765,10 +4890,12 @@
         ${a.id === "voice" && a.info.installed ? deviceSection(busy) : ""}</div>
         <button class="btn${a.info.installed ? "" : " primary"}" data-act="${a.id}">${btn}</button></div>`;
     })());
-    // grouped: the three kinds of Read aloud voice together (each with its "Runs on"), then word look-up
+    // grouped: the three kinds of Read aloud voice together (each with its "Runs on"), then word look-up:
+    // two boxes (1.8.21), Etymology and Legal, each with its free download and the user's own PDFs of that kind
     const voiceCards = (card.voice || "") + qwenRow(busy) + sysRow();
+    const lookCards = etymRow(busy) + legalRow();
     const rows = (voiceCards ? `<div class="agroup"><div class="agtitle">🔊 Read aloud voices</div>${voiceCards}</div>` : "")
-      + (card.dict || legalRow() || mydictRow() ? `<div class="agroup"><div class="agtitle">🔍 Word look-up</div>${card.dict || ""}${legalRow()}${mydictRow()}</div>` : "");
+      + (lookCards ? `<div class="agroup"><div class="agtitle">🔍 Word look-up</div>${lookCards}</div>` : "");
     dialog(`<h3>Add-ons</h3>
       <p class="muted">Optional extras for Flipbook. Nothing is downloaded unless you choose Add, and each add-on works offline afterwards.
       They are stored in the <i>addons</i> folder next to Flipbook. Choose Remove to delete one and free the space.</p>
@@ -4789,11 +4916,15 @@
         else if (busy(dictInfo.download, /downloading|verifying|building/)) showDictProgress();
         else dictOfferDialog(back);
       } else if (act === "legal") { legalBusy() ? showLegalProgress(back) : legalDialog(back); }
+      else if (act === "legalfree") {
+        if (!legalBusy()) { const r = await apiPost("api/legal/install"); if (r) legalInfo = (await r.json().catch(() => null)) || legalInfo; }
+        showLegalProgress(back);
+      } else if (act === "mdprog") showMydictProgress(back);
       else if (act === "legalrm") {
         const src = b.dataset.src;
         dialog(`<h3>Remove ${escHtml(shortSrc(src))}?</h3><p>This deletes it from Flipbook's legal dictionary.${src === "blacks2" ? " You can download it again later." : " Your own PDF files are not touched; you can add them again later."}</p>`,
           [["Cancel", back], ["Remove", async () => { await apiPost("api/legal/remove", { source: src }); back(); }, true]]);
-      } else if (act === "mydict") { mydictBusy() ? showMydictProgress(back) : mydictAdd(null, back); }
+      } else if (act === "mydict") { mydictBusy() ? showMydictProgress(back) : mydictAdd(b.dataset.kind || "general", back); }
       else if (act === "mdren" || act === "mdkind" || act === "mdrm") {
         const t = myDicts().find(x => x.id === b.dataset.id); if (!t) return back();
         const fail = async res => { const j = res ? await res.json().catch(() => null) : null;
@@ -4827,7 +4958,7 @@
     // something running in the background: keep the list's percentages and states moving
     const dv = voiceInfo.device || {}, gd = (dv.gpu_model || {}).download;
     if (list.some(a => busy(a.info.download, a.re)) || dv.testing || busy(gd, /downloading|verifying|converting/) ||
-        (qwenInfo && busy(qwenInfo.download, /downloading|verifying|installing/)) || legalBusy() || mydictBusy()) {
+        (qwenInfo && busy(qwenInfo.download, /downloading|verifying|installing/)) || legalBusy() || mydictBusy() || dictBusy()) {
       addonsTimer = setInterval(async () => {
         if ($("raDlg").style.display === "none" || !$("raDlgBox").querySelector(".addon")) { clearInterval(addonsTimer); return; }
         if (document.activeElement && document.activeElement.id === "devMode") return;   // don't redraw under an open menu
@@ -4873,7 +5004,7 @@
       }, true]]);
   }
   function dictRemoveDialog(back) {
-    dialog(`<h3>Remove the Dictionary?</h3><p>This deletes the Dictionary add-on and frees about <b>${mb(dictInfo.size)}</b>. Word look-up will offer to download it again.</p>`,
+    dialog(`<h3>Remove Webster's 1913 and WordNet?</h3><p>This deletes the free etymology dictionary and frees about <b>${mb(dictInfo.size)}</b>.${hasMine("general") ? " Your own etymology dictionaries stay." : ""} Word look-up will offer to download it again.</p>`,
       [["Cancel", back || closeDialog], ["Remove", async () => {
         try { dictInfo = await (await fetch("api/dict/remove", { method: "POST", headers: { "X-Flipbook": "1" } })).json(); } catch (e) {}
         setLookMode(false);

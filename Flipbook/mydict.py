@@ -59,7 +59,8 @@ def _read_dicts(con):
         o = _origin(origin)
         out.append({"id": sid, "title": title, "kind": o.get("kind", "general"), "entries": entries,
                     "built": built, "files": len(o.get("files", [])), "names": list(o.get("files", [])),
-                    "pages": o.get("pages", 0), "seq": o.get("seq", 0), "style": o.get("style", {})})
+                    "pages": o.get("pages", 0), "seq": o.get("seq", 0), "style": o.get("style", {}),
+                    "content_kind": (o.get("content") or {}).get("kind") if isinstance(o.get("content"), dict) else None})
     out.sort(key=lambda d: (d["seq"], d["id"]))
     return out
 
@@ -84,7 +85,7 @@ def installed(base, kind=None):
 def info(base):
     p = db_path(base)
     ds = _dicts_at(p)
-    keep = ("id", "title", "kind", "entries", "built", "files", "names", "pages")
+    keep = ("id", "title", "kind", "entries", "built", "files", "names", "pages", "content_kind")
     return {"installed": bool(ds), "dicts": [{k: d[k] for k in keep} for d in ds],
             "bytes": os.path.getsize(p) if os.path.isfile(p) else 0}
 
@@ -195,25 +196,260 @@ _LEGAL_RX = re.compile(r"\b(?:law|laws|legal|jur(?:is|id|y)\w*|judicial|black'?s
                        r"lex|juris|maxims?)\b", re.I)
 
 
-def guess_kind(files, title=""):
-    """'legal' or 'general', only to preselect the choice in the dialog."""
+# words in a title that say "not a law dictionary": word origins, the English language, other subjects
+_GENERAL_RX = re.compile(
+    r"\b(?:etymolog\w*|word\s+origins?|origins?\s+of\s+(?:english\s+)?words|word\s+roots?|roots|combining\s+forms?|"
+    r"english\s+language|english\s+dictionary|dictionary\s+of\s+(?:the\s+)?english|thesaur\w*|slang|synonyms?|"
+    r"antonyms?|idioms?|rhym\w*|spelling|pronouncing|pronunciation|vocabular\w*|"
+    r"(?:english|french|german|spanish|italian|russian|japanese|greek|latin)[\s-]+"
+    r"(?:english|french|german|spanish|italian|russian|japanese|greek|latin)|"
+    r"military|naval|nautical|bible|biblical|myth\w*|biograph\w*|medical|geograph\w*|botan\w*|chemi\w*)\b", re.I)
+# on a title page
+_LEGAL_TITLE_RX = re.compile(r"black'?s\s+law|\b(?:law|legal)\s+(?:dictionary|lexicon|glossary|terms|words|phrases|maxims)"
+                             r"|\bdictionary\s+of\s+(?:the\s+)?(?:law|legal)|\bjurisprudence\b|\blaw\s+of\s+england\b", re.I)
+_GENERAL_TITLE_RX = re.compile(r"\bdictionary\s+of\s+the\s+english\s+language|\betymolog\w*|\bthesaurus|\bsynonyms\b"
+                               r"|\bword\s+roots?\b|\bcombining\s+forms\b|\borigins?\s+of\s+(?:english\s+)?words", re.I)
+# words that law dictionaries use on every page (and an ordinary dictionary on few)
+_LAW_WORDS_RX = re.compile(
+    r"\b(?:courts?|statutes?|statutory|plaintiffs?|defendants?|judgments?|jurisdictions?|contracts?|torts?|liens?|"
+    r"equity|equitable|decrees?|lessees?|lessors?|mortgag\w+|conveyances?|testators?|heirs?|felony|felonies|"
+    r"indictments?|chancery|verdicts?|appellants?|appellee|litigants?|lawful|unlawful|legal|legally|law|laws|"
+    r"leases?|grantors?|grantees?|tenants?|tenancy|estates?|property|deeds?|wills?|devise[sd]?|bequest|"
+    r"liability|liable|damages|suits?|actions?|parties|party|jury|juries|attorneys?|counsel|prosecution|"
+    r"criminal|crimes?|offen[cs]es?|evidence|witness(?:es)?|trials?|appeals?|pleadings?|pleas?|writs?|"
+    r"injunctions?|statute|creditors?|debtors?|obligations?|title|possession|owners?|ownership|rights?|"
+    r"held|holding|enacted|act|acts|sec|stat|code|const)\b", re.I)
+_CASE_RX = re.compile(r"\b[A-Z][A-Za-z.'&]+ v\. [A-Z][A-Za-z]")
+
+
+def _names_text(fl, title):
+    return " ".join([title or ""] + [_stem(f) for f in fl[:3]]
+                    + [os.path.basename(os.path.dirname(f)) for f in fl[:1]]).replace("_", " ")
+
+
+def _kind_of_names(s):
+    lg, gn = bool(_LEGAL_RX.search(s)), bool(_GENERAL_RX.search(s))
+    return "legal" if lg and not gn else "general" if gn and not lg else None
+
+
+def _kind_signals(files, title=""):
+    """What kind_evidence looks at (also used by the tuning tools): names, title page, sampled pages."""
+    t_start = time.time()
     paths = [files] if isinstance(files, str) else list(files or [])
     fl = legal._expand(paths)
-    names = " ".join([title or ""] + [_stem(f) for f in fl] + [os.path.basename(os.path.dirname(f)) for f in fl[:1]])
-    if _LEGAL_RX.search(names.replace("_", " ")):
-        return "legal"
-    hits = words = 0
+    sig = {"names": None, "meta": None, "title_page": None, "blacks": False, "words": 0, "law": 0, "cases": 0,
+           "rate": 0.0, "pages": None}
+    if not fl:
+        return sig
+    sig["names"] = _kind_of_names(_names_text(fl, title))
+    # the first file (title page), and up to four others spread through a book in many files
+    pick = [0] + sorted({int(round(q * (len(fl) - 1))) for q in (0.2, 0.4, 0.6, 0.8)} - {0}) if len(fl) > 1 else [0]
+    readers, sizes = {}, {}
+    for k in pick:
+        try:
+            r = _open(fl[k])
+            readers[k], sizes[k] = r, len(r.pages)
+        except Exception:
+            readers[k], sizes[k] = None, 0
+    r0 = readers.get(0)
+    if r0 is not None:
+        try:
+            meta = _real_title(str((r0.metadata or {}).get("/Title", "") or ""))
+        except Exception:
+            meta = None
+        if meta:
+            sig["meta"] = _kind_of_names(meta)
+        # the title page (the first few pages of the first file)
+        tp = ""
+        for i in range(min(3, sizes[0])):
+            try:
+                tp += " " + (r0.pages[i].extract_text() or "")
+            except Exception:
+                pass
+            if _LEGAL_TITLE_RX.search(tp.replace("’", "'")) or _GENERAL_TITLE_RX.search(tp):
+                break
+        tp = re.sub(r"\s+", " ", tp.replace("’", "'"))
+        if re.search(r"black'?s\s+law\s+dictionary", tp, re.I):
+            sig["blacks"] = True
+        lg, gn = bool(_LEGAL_TITLE_RX.search(tp)), bool(_GENERAL_TITLE_RX.search(tp))
+        sig["title_page"] = "legal" if lg and not gn else "general" if gn and not lg else None
+    # a few pages from the middle of the book (an OCR'd page can take half a second: stop when there are
+    # enough words)
+    words = law = cases = 0
+    order = [k for k in pick if k != 0 or len(pick) == 1] or pick
+    pts = _sample_points([sizes[k] for k in order], 6, 0.25, 0.8)
+    pts = [(order[fi], pi) for fi, pi in pts]
+    mid = len(pts) // 2
+    pts = sorted(pts, key=lambda p: (abs(pts.index(p) - mid), pts.index(p)))   # the middle first
+    seen = 0
+    for fi, pi in pts:
+        if (seen >= 2 and words >= 1200) or (words >= 400 and time.time() - t_start > 1.5):
+            break
+        try:
+            t = readers[fi].pages[pi].extract_text() or ""
+        except Exception:
+            t = ""
+        ws = re.findall(r"[A-Za-z]{2,}", t)
+        if len(ws) < 60:
+            continue
+        seen += 1
+        words += len(ws)
+        law += len(_LAW_WORDS_RX.findall(t))
+        cases += len(_CASE_RX.findall(t))
+    sig.update(words=words, law=law, cases=cases, rate=round(law / words, 4) if words else 0.0)
+    if words >= 400:
+        rate = law / words
+        if rate >= PAGE_LEGAL_RATE or (rate >= PAGE_LEGAL_RATE * 0.7 and cases >= 3):
+            sig["pages"] = "legal"
+        elif rate <= PAGE_GENERAL_RATE and cases == 0:
+            sig["pages"] = "general"
+    return sig
+
+
+# Share of law words (_LAW_WORDS_RX) among the words on the sampled pages. Tuned on real books (1.8.21):
+# law dictionaries 0.03-0.10 (most over 0.045; case names "A v. B" help the lower ones), other law books
+# 0.03-0.07; general and specialist (non-law) dictionaries and other books 0.001-0.015. Below
+# PAGE_GENERAL_RATE with no case names counts as "not a law book".
+PAGE_LEGAL_RATE = 0.035
+PAGE_GENERAL_RATE = 0.012
+
+
+def kind_evidence(files, title=""):
+    """{"kind": "legal" | "general" | None, "why": "..."}: what the book itself says it is, from its title, its
+    file and folder names, its title page and the words on a few of its pages. Fast (a few pages). A kind only
+    with positive evidence; None when unsure or when the signs disagree. Used to warn when a book is added as
+    the other kind."""
     try:
-        r = _open(fl[0])
-        n = len(r.pages)
-        for i in sorted({int(n * q) for q in (0.3, 0.5, 0.7)}):
-            t = r.pages[min(i, n - 1)].extract_text() or ""
-            words += len(t.split())
-            hits += len(re.findall(r"\b(?:law|legal|court|statute|plaintiff|defendant|contract|tort|equity|lien)s?\b",
-                                   t, re.I))
+        s = _kind_signals(files, title)
     except Exception:
-        pass
-    return "legal" if words and hits >= max(6, words / 120) else "general"
+        return {"kind": None, "why": ""}
+    if s["blacks"]:
+        return {"kind": "legal", "why": "its title page"}
+    named = {k for k in (s["names"], s["meta"]) if k}
+    named = named.pop() if len(named) == 1 else None      # the file name and the PDF's /Title disagree: unsure
+    votes = [(k, w) for k, w in ((named, "its title"), (s["title_page"], "its title page"),
+                                 (s["pages"], "the words on its pages")) if k]
+    kinds = {k for k, w in votes}
+    if len(kinds) != 1:
+        return {"kind": None, "why": ""}
+    kind = kinds.pop()
+    whys = [w for k, w in votes]
+    why = whys[0] if len(whys) == 1 else ", ".join(whys[:-1]) + " and " + whys[-1]
+    return {"kind": kind, "why": why}
+
+
+def guess_kind(files, title=""):
+    """'legal' or 'general', only to preselect the choice in the dialog."""
+    return "legal" if kind_evidence(files, title)["kind"] == "legal" else "general"
+
+
+# ---------------------------------------------------------------- what the headwords say
+# Distinctly legal terms and Latin phrases (general knowledge). A big ordinary dictionary has many of the
+# single words too, so content_kind also counts everyday words that a law dictionary does not list.
+LEGAL_TERMS = tuple("""
+abatement|abator|abeyance|ab initio|abjuration|abscond|accessory|accord and satisfaction|accretion|acquittal|
+actus reus|ad damnum|ademption|ad litem|administrator|admiralty|adverse possession|affiant|affidavit|
+affirmance|alienation|alimony|allodial|amicus curiae|ancillary|annuity|appellant|appellee|appurtenant|
+arraignment|arrears|assignee|assignor|assumpsit|attainder|attestation|attorney general|audita querela|
+bailee|bailment|bailor|bankruptcy|barratry|battery|bench warrant|bill of exchange|bill of lading|
+bill of particulars|bona fide|bona vacantia|bottomry|burden of proof|capias|caveat emptor|certiorari|
+cestui que trust|chattel|chattels real|chose in action|codicil|cognovit|collusion|common law|
+compurgator|condemnation|consanguinity|consideration|contempt of court|contributory negligence|conversion|
+conveyance|copyhold|coparcenary|corpus delicti|coverture|curtesy|damnum absque injuria|de facto|de jure|
+de bonis non|decedent|declaratory judgment|decree nisi|deed poll|defeasance|del credere|demise|demurrer|
+deponent|deposition|detinue|devisee|devisor|dictum|distrainor|distress|domicile|dower|due process|
+duress|easement|ejectment|eminent domain|enfeoffment|entail|equity of redemption|escheat|escrow|
+estoppel|estovers|ex parte|ex post facto|executor|executrix|extradition|fee simple|fee tail|felony|
+feoffment|fiduciary|fieri facias|forcible entry|foreclosure|frankalmoign|frankpledge|fraudulent conveyance|
+garnishee|garnishment|grand jury|grantee|grantor|guardian ad litem|habeas corpus|hearsay|hereditament|
+homicide|hypothecation|impeachment|in camera|in forma pauperis|in personam|in rem|incorporeal hereditament|
+indemnity|indenture|indictment|infeudation|injunction|inter vivos|interlocutory|interpleader|intestacy|
+intestate|ipso facto|joint tenancy|jointure|judgment debtor|jurisdiction|jus tertii|laches|larceny|
+lessee|lessor|letters patent|letters of administration|lex fori|lex loci|libel|lien|lis pendens|
+locus standi|malfeasance|malicious prosecution|mandamus|manslaughter|mens rea|mesne profits|misdemeanor|
+misfeasance|mittimus|mortgagee|mortgagor|mortmain|ne exeat|negotiable instrument|nisi prius|nolle prosequi|
+nolo contendere|non compos mentis|nonfeasance|nonsuit|novation|nudum pactum|nuisance|obiter dictum|
+parol evidence|partition|per curiam|per stirpes|per capita|perjury|plaintiff|pleading|power of attorney|
+praecipe|prima facie|primogeniture|probate|pro bono|pro rata|pro se|promissory note|quantum meruit|
+quasi contract|quiet title|quitclaim|quo warranto|ratification|recognizance|recoupment|reversioner|
+remainderman|replevin|res gestae|res ipsa loquitur|res judicata|rescission|respondeat superior|
+restraint of trade|reversion|riparian|scienter|scire facias|seisin|sequestration|servitude|set off|
+socage|specific performance|stare decisis|statute of frauds|statute of limitations|subpoena|
+subpoena duces tecum|subrogation|sui juris|summons|supersedeas|surety|tenancy in common|testamentary|
+testator|testatrix|tort|tortfeasor|trespass|trover|trustee|ultra vires|undue influence|usufruct|usury|
+venire|venue|vested remainder|voir dire|waiver|warranty deed|writ of error|wrongful death|attachment|
+abstract of title|acknowledgment|affray|alias writ|amercement|appeal bond|bail bond|cause of action|
+champerty|maintenance|chancery|cross examination|cy pres|estate tail|false imprisonment|holder in due course|
+""".replace("\n", "").split("|"))
+LEGAL_TERMS = tuple(t.strip() for t in LEGAL_TERMS if t.strip())
+
+# Everyday words that an ordinary dictionary lists and a law dictionary does not. (Words that real law
+# dictionaries do list, often in a legal sense, were taken out when tuning: cottage, meadow, tail, boot, run,
+# cry, fog, bubble, balloon, glove, silk, cotton ...)
+EVERYDAY_WORDS = tuple("""
+butterfly|caterpillar|beetle|mosquito|sparrow|parrot|giraffe|elephant|monkey|rabbit|squirrel|toad|lizard|
+snail|turtle|owl|swan|kitten|puppy|hamster|penguin|kangaroo|zebra|flamingo|peacock|ostrich|hedgehog|
+ladybird|dragonfly|grasshopper|jellyfish|octopus|banana|carrot|cabbage|cucumber|lettuce|onion|garlic|
+potato|tomato|pumpkin|cherry|grape|lemon|peach|plum|strawberry|raspberry|blueberry|apricot|coconut|melon|
+pineapple|walnut|almond|biscuit|pancake|pudding|muffin|porridge|omelette|spinach|broccoli|celery|radish|
+turnip|parsnip|soup|salad|noodle|marshmallow|lollipop|toffee|rainbow|thunder|snowflake|icicle|drizzle|
+breeze|puddle|pebble|blossom|petal|tulip|daisy|dandelion|buttercup|sunflower|daffodil|violet|lily|fern|
+mushroom|acorn|cobweb|spoon|teaspoon|saucer|teapot|kettle|ladle|saucepan|pillow|broom|bucket|mirror|
+scissors|needle|umbrella|basket|toothbrush|shampoo|sneeze|yawn|giggle|tickle|whistle|wink|shrug|hiccup|
+freckle|eyebrow|eyelash|chin|nostril|thumb|wrist|ankle|cheek|hum|chew|sip|nibble|hop|wriggle|sniff|snore|
+sleepy|hungry|thirsty|fluffy|shiny|sticky|soggy|crunchy|purple|yellow|pink|crimson|scarlet|violin|guitar|
+flute|trumpet|harp|melody|kite|feather|nest|beak|paw|whisker|chimney|curtain|cushion|sponge|soap|towel|
+comb|ribbon|wool|linen|apron|bonnet|mitten|slipper|sandal|sock|scarf|skirt|blouse|sing|laugh|smile|swim|
+""".replace("\n", "").split("|"))
+EVERYDAY_WORDS = tuple(w.strip() for w in EVERYDAY_WORDS if w.strip())
+
+# Tuned on real books (1.8.21), as coverage of the two lists: law dictionaries legal 0.36-0.95 with everyday
+# 0.00-0.04 (a short glossary of Latin law phrases: 25 law terms in 66); smaller general dictionaries legal
+# 0.01-0.02 with everyday 0.03-0.05; a big ordinary dictionary has most everyday words.
+CONTENT_LEGAL_COVER = 0.25          # legal: this much of LEGAL_TERMS ...
+CONTENT_LEGAL_MAX_EVERYDAY = 0.06   # ... and at most this much of EVERYDAY_WORDS (and under a quarter of the legal)
+CONTENT_GENERAL_EVERYDAY = 0.25     # general (a big dictionary): this much of EVERYDAY_WORDS, legal at most 1.5 x
+CONTENT_MIN_HEADS = 500             # general (a smaller one): this many headwords, few law terms, some everyday
+
+
+def _head_key_set(heads):
+    keys = set()
+    for h in heads:
+        try:
+            keys.update(legal._head_keys(h))
+        except Exception:
+            continue
+    # a plural or 'Estoppel by deed' style sub-heads also count for their first words
+    more = set()
+    for k in keys:
+        if k.endswith("s") and len(k) > 4:
+            more.add(k[:-1])
+    return keys | more
+
+
+def content_kind(heads):
+    """{"kind": "legal" | "general" | None, "score", "legal_hits", "checked"} from the headwords a build
+    found: how many of LEGAL_TERMS it lists against how many EVERYDAY_WORDS. score = legal coverage minus
+    everyday coverage (-1..1). None when it is unclear (a small or mixed book)."""
+    heads = [h for h in (heads or []) if h]
+    keys = _head_key_set(heads)
+    lh = sum(1 for t in LEGAL_TERMS if t in keys)
+    eh = sum(1 for w in EVERYDAY_WORDS if w in keys)
+    lc, ec = lh / len(LEGAL_TERMS), eh / len(EVERYDAY_WORDS)
+    score = round(lc - ec, 3)
+    res = {"kind": None, "score": score, "legal_hits": lh, "checked": len(heads)}
+    n = len(heads)
+    if n < 40:
+        return res
+    share = lh / n                                  # for a small glossary of law terms
+    few_everyday = ec <= CONTENT_LEGAL_MAX_EVERYDAY and ec <= lc / 4
+    if few_everyday and (lc >= CONTENT_LEGAL_COVER or (share >= 0.06 and lh >= 12)):
+        res["kind"] = "legal"
+    elif ec >= CONTENT_GENERAL_EVERYDAY and lc <= 1.5 * ec and n >= 150:
+        res["kind"] = "general"                     # a big ordinary dictionary (it has many law words too)
+    elif n >= CONTENT_MIN_HEADS and eh >= 4 and ec > lc and share <= 0.01:
+        res["kind"] = "general"                     # hardly a law term, a few everyday words
+    return res
 
 
 def _sample_points(sizes, k, lo=0.05, hi=0.95):
@@ -1149,7 +1385,7 @@ class Installer:
         self.build_seconds = None
         self.style = None
         self._st = {"state": "idle", "source": None, "title": "", "kind": None, "pct": 0, "message": "",
-                    "error": None}
+                    "error": None, "content_kind": None}
 
     def status(self):
         return dict(self._st)
@@ -1166,7 +1402,8 @@ class Installer:
         self.cancel_flag = True
 
     def _fail(self, msg, title="", kind=None):
-        self._set(state="error", source=None, title=title, kind=kind, pct=0, message="Error", error=msg)
+        self._set(state="error", source=None, title=title, kind=kind, pct=0, message="Error", error=msg,
+                  content_kind=None)
         return self.status()
 
     def start_import(self, files, title=None, kind=None):
@@ -1192,7 +1429,7 @@ class Installer:
                     title = "My dictionary"
             self.cancel_flag = False
             self._set(state="building", source=None, title=title, kind=kind, pct=0, message="Opening the PDFs",
-                      error=None)
+                      error=None, content_kind=None)
             self.thread = threading.Thread(target=self._wrap, args=(fl, title, kind), daemon=True)
             with _running_lock:
                 _running[os.path.abspath(self.base)] = self
@@ -1218,11 +1455,17 @@ class Installer:
             raise legal._Cancelled()
         self.style = style
         self._set(pct=95, message=f"Saving {len(entries):,} entries")
+        try:
+            ck = content_kind([head for head, text in entries])
+        except Exception:
+            ck = {"kind": None, "score": 0.0}
         origin = {"files": [os.path.basename(f) for f in fl], "pages": style.get("pages", 0),
-                  "style": {k: v for k, v in style.items() if k != "scores"}}
+                  "style": {k: v for k, v in style.items() if k != "scores"},
+                  "content": {"kind": ck.get("kind"), "score": ck.get("score", 0.0)}}
         did = _write_new(self.base, title, kind, entries, origin)
         self.build_seconds = time.time() - t0
-        self._set(state="done", source=did, pct=100, message=f"Added: {len(entries):,} entries")
+        self._set(state="done", source=did, pct=100, message=f"Added: {len(entries):,} entries",
+                  content_kind=ck.get("kind"))
 
 
 # ---------------------------------------------------------------- look-ups
